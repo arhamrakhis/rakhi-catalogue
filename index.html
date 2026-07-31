@@ -401,9 +401,25 @@
       <div class="error-text" id="errPhone">Enter a valid 10-digit number</div>
     </div>
     <div class="field">
-      <label>Delivery Address</label>
-      <textarea id="custAddress" rows="3" placeholder="House no, street, area, city, pincode"></textarea>
+      <label>House No. / Street / Area</label>
+      <textarea id="custAddress" rows="2" placeholder="House no, street, area/locality"></textarea>
       <div class="error-text" id="errAddress">Please enter your address</div>
+    </div>
+    <div class="field">
+      <label>Pincode</label>
+      <input type="tel" id="custPincode" placeholder="6-digit pincode" maxlength="6">
+      <div class="error-text" id="errPincode">Enter a valid 6-digit pincode</div>
+      <div id="pincodeStatus" style="font-size:11.5px;margin-top:4px;"></div>
+    </div>
+    <div class="field">
+      <label>City</label>
+      <input type="text" id="custCity" placeholder="City">
+      <div class="error-text" id="errCity">Please enter your city</div>
+    </div>
+    <div class="field">
+      <label>State</label>
+      <input type="text" id="custState" placeholder="State">
+      <div class="error-text" id="errState">Please enter your state</div>
     </div>
     <div class="field">
       <label>Note (optional)</label>
@@ -454,18 +470,31 @@
 const CONFIG = {
   storeName: "Your Rakhi Store",
   upiId: "yourupi@bank",          // <-- put your real UPI ID here
-  whatsappNumber: "919999999999", // <-- your WhatsApp number with country code, no + or spaces
+  whatsappNumber: "919043048318", // <-- your WhatsApp number with country code, no + or spaces
+
+  // <-- PASTE YOUR PUBLISHED GOOGLE SHEET CSV LINK HERE (see setup notes below)
+  sheetCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYymLl_OynZr3BCicYkGCNJWuVdDFUi1dHU0jgubZOay829zIS-i3YaraAyFtlsLrrQcklG9__cSct/pub?gid=0&single=true&output=csv",
+
+  // Folder (in this same GitHub repo) where you upload product photos.
+  // If your sheet's "Image" column just has a filename like "rakhi1.jpg",
+  // this prefix is added automatically to build the full path.
+  imageFolder: "images/",
 };
 
 /* =========================================================
-   EDIT ZONE 4 — PRODUCT CATALOGUE
-   Add/remove products here. "img" can be a real photo URL
-   (just replace the color hex with: img:"https://...jpg")
-   Categories must match one of the CATS list below.
+   HOW THE PRODUCT SHEET WORKS
+   1. Make a Google Sheet with these column headers in row 1:
+      Name | Category | Price | Stock | Image | Description | Active
+   2. File → Share → Publish to web → select the sheet → CSV → Publish
+   3. Copy that link into CONFIG.sheetCsvUrl above
+   4. Upload photos to an "images" folder in your GitHub repo,
+      and just type the filename (e.g. rakhi1.jpg) in the Image column
+   5. Edit the sheet anytime — the site reloads fresh data every visit,
+      no re-uploading of index.html needed
+   Leave sheetCsvUrl empty and the sample products below are shown instead,
+   so the page still works while you're setting the sheet up.
    ========================================================= */
-const CATS = ["All","Single Rakhis","Couple Rakhis","Kids Rakhis","Roli Chawal & Accessories","Money Envelopes"];
-
-const PRODUCTS = [
+const SAMPLE_PRODUCTS = [
   { id:1, name:"Golden Zardosi Single Rakhi", price:149, cat:"Single Rakhis", color:"#C9A227", icon:"🪢" },
   { id:2, name:"Kundan Pearl Single Rakhi", price:199, cat:"Single Rakhis", color:"#B23A63", icon:"🪢" },
   { id:3, name:"Silk Thread Classic Rakhi", price:99, cat:"Single Rakhis", color:"#7A1F2B", icon:"🪢" },
@@ -476,24 +505,87 @@ const PRODUCTS = [
   { id:8, name:"Roli Chawal Pooja Thali Pack", price:59, cat:"Roli Chawal & Accessories", color:"#C9A227", icon:"🌾" },
   { id:9, name:"Designer Shagun Envelope Set (5pc)", price:99, cat:"Money Envelopes", color:"#B23A63", icon:"✉️" },
 ];
+const PLACEHOLDER_COLORS = ["#C9A227","#B23A63","#7A1F2B","#8E3B46","#5A1521","#E8871E","#3F7A4E"];
 
 /* ================= APP STATE ================= */
 let activeCat = "All";
-let cart = {}; // {productId: qty}
+let cart = {};
+let PRODUCTS = [];
+let CATS = ["All"];
+
+/* ================= CSV PARSER (handles quoted commas) ================= */
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i], n = text[i+1];
+    if(inQuotes){
+      if(c === '"' && n === '"'){ field+='"'; i++; }
+      else if(c === '"'){ inQuotes=false; }
+      else field+=c;
+    } else {
+      if(c === '"') inQuotes=true;
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\n' || c === '\r'){
+        if(field!=='' || row.length){ row.push(field); rows.push(row); row=[]; field=''; }
+        if(c === '\r' && n === '\n') i++;
+      } else field+=c;
+    }
+  }
+  if(field!=='' || row.length){ row.push(field); rows.push(row); }
+  if(!rows.length) return [];
+  const headers = rows[0].map(h=>h.trim().toLowerCase());
+  return rows.slice(1).filter(r=>r.some(v=>v.trim()!=='')).map((r,i)=>{
+    const obj = {};
+    headers.forEach((h,idx)=> obj[h] = (r[idx]||'').trim());
+    return {
+      id: i+1,
+      name: obj.name || 'Unnamed item',
+      cat: obj.category || 'Uncategorised',
+      price: Number(obj.price) || 0,
+      stock: obj.stock === '' ? null : Number(obj.stock),
+      img: obj.image ? (obj.image.startsWith('http') ? obj.image : CONFIG.imageFolder + obj.image) : null,
+      desc: obj.description || '',
+      active: (obj.active || 'yes').toLowerCase() !== 'no',
+      color: PLACEHOLDER_COLORS[i % PLACEHOLDER_COLORS.length],
+      icon: "🎁",
+    };
+  }).filter(p=>p.active);
+}
+
+/* ================= LOAD PRODUCTS (from sheet, or sample fallback) ================= */
+async function loadProducts(){
+  gridEl.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#8a7a68;padding:30px 0;">Loading rakhis… 🪢</p>`;
+  if(CONFIG.sheetCsvUrl && CONFIG.sheetCsvUrl.trim()!==''){
+    try{
+      const res = await fetch(CONFIG.sheetCsvUrl);
+      if(!res.ok) throw new Error('Sheet fetch failed');
+      const text = await res.text();
+      const parsed = parseCSV(text);
+      PRODUCTS = parsed.length ? parsed : SAMPLE_PRODUCTS;
+    } catch(e){
+      console.error('Could not load product sheet, showing sample items instead:', e);
+      PRODUCTS = SAMPLE_PRODUCTS;
+    }
+  } else {
+    PRODUCTS = SAMPLE_PRODUCTS;
+  }
+  CATS = ["All", ...new Set(PRODUCTS.map(p=>p.cat))];
+  renderCatChips();
+  renderGrid();
+}
 
 /* ================= RENDER CATEGORY CHIPS ================= */
 const catsEl = document.getElementById('cats');
-CATS.forEach(c=>{
-  const chip = document.createElement('div');
-  chip.className = 'chip' + (c===activeCat ? ' active':'');
-  chip.textContent = c;
-  chip.onclick = ()=>{ activeCat=c; renderCats(); renderGrid(); };
-  chip.dataset.cat = c;
-  catsEl.appendChild(chip);
-});
-function renderCats(){
-  [...catsEl.children].forEach(ch=>{
-    ch.className = 'chip' + (ch.dataset.cat===activeCat ? ' active':'');
+function renderCatChips(){
+  catsEl.innerHTML = '';
+  CATS.forEach(c=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (c===activeCat ? ' active':'');
+    chip.textContent = c;
+    chip.onclick = ()=>{ activeCat=c; renderCatChips(); renderGrid(); };
+    chip.dataset.cat = c;
+    catsEl.appendChild(chip);
   });
 }
 
@@ -502,34 +594,42 @@ const gridEl = document.getElementById('grid');
 function renderGrid(){
   gridEl.innerHTML = '';
   const list = PRODUCTS.filter(p=> activeCat==="All" || p.cat===activeCat);
+  if(list.length===0){
+    gridEl.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#8a7a68;padding:30px 0;">No items in this category yet.</p>`;
+    return;
+  }
   list.forEach(p=>{
     const qty = cart[p.id] || 0;
+    const soldOut = p.stock !== null && p.stock !== undefined && p.stock <= 0;
     const card = document.createElement('div');
     card.className='card';
     const imgHtml = p.img
       ? `<img src="${p.img}" alt="${p.name}">`
       : p.icon;
     card.innerHTML = `
-      <div class="card-img" style="background:${p.img ? '#eee' : p.color}">${imgHtml}</div>
+      <div class="card-img" style="background:${p.img ? '#eee' : p.color}${soldOut ? ';filter:grayscale(1);opacity:.6;' : ''}">${imgHtml}</div>
       <div class="card-body">
         <div class="card-cat">${p.cat}</div>
         <div class="card-name">${p.name}</div>
+        ${p.desc ? `<div style="font-size:11px;color:#a08a70;">${p.desc}</div>` : ''}
         <div class="card-price">₹${p.price}</div>
         <div class="qty-row" id="qtyrow-${p.id}">
-          ${qty===0
-            ? `<button class="add-btn" onclick="addItem(${p.id})">Add to Cart</button>`
-            : `<div class="stepper">
-                 <button onclick="changeQty(${p.id},-1)">−</button>
-                 <span>${qty}</span>
-                 <button onclick="changeQty(${p.id},1)">+</button>
-               </div>`
+          ${soldOut
+            ? `<div style="text-align:center;font-size:12px;font-weight:700;color:#b23a3a;">Sold Out</div>`
+            : qty===0
+              ? `<button class="add-btn" onclick="addItem(${p.id})">Add to Cart</button>`
+              : `<div class="stepper">
+                   <button onclick="changeQty(${p.id},-1)">−</button>
+                   <span>${qty}</span>
+                   <button onclick="changeQty(${p.id},1)">+</button>
+                 </div>`
           }
         </div>
       </div>`;
     gridEl.appendChild(card);
   });
 }
-renderGrid();
+loadProducts();
 
 function addItem(id){ cart[id] = 1; renderGrid(); updateFab(); }
 function changeQty(id, delta){
@@ -607,13 +707,57 @@ function validateDetails(){
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
   const address = document.getElementById('custAddress').value.trim();
+  const pincode = document.getElementById('custPincode').value.trim();
+  const city = document.getElementById('custCity').value.trim();
+  const state = document.getElementById('custState').value.trim();
 
   document.getElementById('errName').style.display = name ? 'none':'block';
   document.getElementById('errPhone').style.display = /^[6-9]\d{9}$/.test(phone) ? 'none':'block';
   document.getElementById('errAddress').style.display = address ? 'none':'block';
+  document.getElementById('errPincode').style.display = /^[1-9]\d{5}$/.test(pincode) ? 'none':'block';
+  document.getElementById('errCity').style.display = city ? 'none':'block';
+  document.getElementById('errState').style.display = state ? 'none':'block';
 
-  if(!name || !/^[6-9]\d{9}$/.test(phone) || !address) ok = false;
+  if(!name || !/^[6-9]\d{9}$/.test(phone) || !address || !/^[1-9]\d{5}$/.test(pincode) || !city || !state) ok = false;
   return ok;
+}
+
+/* ================= PINCODE VERIFICATION =================
+   Checks the entered pincode against India's official Postal
+   Pincode API and auto-fills City/State so they can't mismatch
+   the pincode. If the lookup service is unreachable, it doesn't
+   block checkout — the person can still enter city/state manually. */
+let pincodeVerified = false;
+const pincodeInput = document.getElementById('custPincode');
+const statusEl = document.getElementById('pincodeStatus');
+pincodeInput.addEventListener('input', ()=>{
+  pincodeInput.value = pincodeInput.value.replace(/\D/g,'').slice(0,6);
+  pincodeVerified = false;
+  if(pincodeInput.value.length === 6) lookupPincode(pincodeInput.value);
+  else statusEl.textContent = '';
+});
+async function lookupPincode(code){
+  statusEl.style.color = '#8a7a68';
+  statusEl.textContent = 'Checking pincode…';
+  try{
+    const res = await fetch(`https://api.postalpincode.in/pincode/${code}`);
+    const data = await res.json();
+    const info = data && data[0];
+    if(info && info.Status === 'Success' && info.PostOffice && info.PostOffice.length){
+      const po = info.PostOffice[0];
+      document.getElementById('custCity').value = po.District || po.Name || '';
+      document.getElementById('custState').value = po.State || '';
+      statusEl.style.color = 'var(--success)';
+      statusEl.textContent = '✓ Pincode verified — city/state auto-filled';
+      pincodeVerified = true;
+    } else {
+      statusEl.style.color = '#b23a3a';
+      statusEl.textContent = 'Pincode not found — please double-check it';
+    }
+  } catch(e){
+    statusEl.style.color = '#a08a70';
+    statusEl.textContent = "Couldn't verify automatically — please confirm city/state match";
+  }
 }
 
 function goToPayment(){
@@ -634,6 +778,9 @@ function sendOrder(){
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
   const address = document.getElementById('custAddress').value.trim();
+  const pincode = document.getElementById('custPincode').value.trim();
+  const city = document.getElementById('custCity').value.trim();
+  const state = document.getElementById('custState').value.trim();
   const note = document.getElementById('custNote').value.trim();
   const orderId = generateOrderId();
 
@@ -653,6 +800,9 @@ Customer Details:
 Name: ${name}
 Phone: ${phone}
 Address: ${address}
+City: ${city}
+State: ${state}
+Pincode: ${pincode}${pincodeVerified ? ' (verified)' : ''}
 ${note ? 'Note: '+note : ''}
 
 Payment: Paid via UPI (please confirm receipt)`;
@@ -669,7 +819,12 @@ function resetCart(){
   document.getElementById('custName').value='';
   document.getElementById('custPhone').value='';
   document.getElementById('custAddress').value='';
+  document.getElementById('custPincode').value='';
+  document.getElementById('custCity').value='';
+  document.getElementById('custState').value='';
   document.getElementById('custNote').value='';
+  statusEl.textContent = '';
+  pincodeVerified = false;
   renderGrid(); updateFab();
 }
 </script>
