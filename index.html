@@ -442,8 +442,10 @@
       <h2 style="color:var(--maroon);font-size:30px;" id="payAmount">₹0</h2>
       <a class="primary-btn" style="display:block;text-decoration:none;box-sizing:border-box;" id="upiBtn" href="#" onclick="armPaymentReturn()">Pay with Google Pay</a>
       <div class="note-box">
-        Tap above to pay via Google Pay. Once you return here after paying, we'll automatically show your confirmation and notify us on WhatsApp. UPI payments aren't auto-verified on our end (no payment gateway involved), so we'll confirm receipt on our side.
+        Tap above to pay via Google Pay. Once you return here after paying, we'll automatically show your confirmation and notify us on WhatsApp. UPI payments aren't auto-verified on our end (no payment gateway involved), so we'll confirm receipt on our side.<br><br>
+        <b>Don't have Google Pay installed?</b> Pay ₹<span id="payAmountInline"></span> manually to UPI ID <b id="upiIdInline"></b>, then message us on WhatsApp with your order ID.
       </div>
+      <p style="text-align:center;font-size:11.5px;"><a href="javascript:void(0)" onclick="showConfirmation()" style="color:#a08a70;text-decoration:underline;">Already paid and nothing happened? Tap here</a></p>
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
         📦 Delivery takes 3–4 business days.<br>Need it urgently? <a href="#" id="callLinkPayment" style="color:var(--success);font-weight:700;">Call us directly</a>.
 <div class="overlay" id="confirmOverlay">
@@ -837,6 +839,10 @@ async function lookupPincode(code){
   }
 }
 
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
 function goToPayment(){
   if(!validateDetails()) return;
   closeSheet('detailsOverlay');
@@ -851,9 +857,13 @@ function goToPayment(){
     ${shipping > 0 ? `<div class="totals-row"><span>Shipping (outside ${SETTINGS.localCity})</span><span>₹${shipping}</span></div>` : ''}
   `;
   document.getElementById('payAmount').textContent = '₹'+grandTotal;
+  document.getElementById('payAmountInline').textContent = grandTotal;
+  document.getElementById('upiIdInline').textContent = CONFIG.upiId;
 
   const params = `pa=${encodeURIComponent(CONFIG.upiId)}&pn=${encodeURIComponent(CONFIG.storeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Rakhi Order Payment')}`;
-  document.getElementById('upiBtn').href = `upi://pay?${params}`;
+  // iOS Google Pay only recognises its own gpay:// scheme; Android recognises the standard upi:// scheme.
+  const scheme = isIOS() ? 'gpay://upi/pay' : 'upi://pay';
+  document.getElementById('upiBtn').href = `${scheme}?${params}`;
   currentOrder = null; // fresh order context for this checkout
   showSheet('paymentOverlay');
 }
@@ -863,19 +873,31 @@ function goToPayment(){
    arm a one-time listener when "Pay via UPI" is tapped (that tap IS the
    gesture). When the tab becomes visible again — i.e. the person has come
    back from Google Pay — we treat that as "payment attempted" and move
-   straight to confirmation, attempting to open WhatsApp automatically. */
+   straight to confirmation, attempting to open WhatsApp automatically.
+   IMPORTANT: we only trust this if the page was actually hidden (a real
+   app-switch happened) for a meaningful amount of time — a failed deep
+   link (e.g. Google Pay not installed) never actually hides the page, so
+   this guards against firing prematurely. */
+let armTime = 0;
+let wasHidden = false;
 function armPaymentReturn(){
   if(paymentArmed) return;
   paymentArmed = true;
-  document.addEventListener('visibilitychange', onReturnFromPayment);
-  window.addEventListener('focus', onReturnFromPayment);
+  armTime = Date.now();
+  wasHidden = false;
+  document.addEventListener('visibilitychange', onVisibilityChange);
 }
-function onReturnFromPayment(){
-  if(document.visibilityState && document.visibilityState !== 'visible') return;
-  document.removeEventListener('visibilitychange', onReturnFromPayment);
-  window.removeEventListener('focus', onReturnFromPayment);
+function onVisibilityChange(){
+  if(document.visibilityState === 'hidden'){
+    wasHidden = true;
+    return;
+  }
+  // visibilityState is 'visible' again
+  if(!wasHidden) return;               // never actually left — ignore (failed deep link)
+  if(Date.now() - armTime < 1200) return; // too fast to be a real app switch — ignore
+  document.removeEventListener('visibilitychange', onVisibilityChange);
   paymentArmed = false;
-  setTimeout(showConfirmation, 500);
+  setTimeout(showConfirmation, 400);
 }
 
 /* ================= PREPARE ORDER (computed once per checkout) ================= */
@@ -969,6 +991,8 @@ function resetCart(){
   cart = {};
   currentOrder = null;
   paymentArmed = false;
+  wasHidden = false;
+  document.removeEventListener('visibilitychange', onVisibilityChange);
   document.getElementById('custName').value='';
   document.getElementById('custPhone').value='';
   document.getElementById('custAddress').value='';
