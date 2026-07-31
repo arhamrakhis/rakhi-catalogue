@@ -437,27 +437,28 @@
       <button class="close-x" onclick="closeSheet('paymentOverlay')">✕</button>
     </div>
     <div class="confirm-box">
+      <div id="payBreakdown" style="text-align:left;margin-bottom:10px;"></div>
       <p style="font-size:13px;margin-bottom:4px;color:#8a7a68;">Amount to pay</p>
       <h2 style="color:var(--maroon);font-size:30px;" id="payAmount">₹0</h2>
-      <a class="primary-btn" style="display:block;text-decoration:none;box-sizing:border-box;background:#1a73e8;" id="gpayBtn" href="#">Pay with Google Pay</a>
-      <a class="secondary-btn" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;" id="upiBtn" href="#">Pay with Other UPI App</a>
-      <button class="secondary-btn" onclick="sendOrder()">I've Paid — Send Order Details</button>
+      <a class="primary-btn" style="display:block;text-decoration:none;box-sizing:border-box;" id="upiBtn" href="#" onclick="armPaymentReturn()">Pay via UPI (Google Pay / PhonePe / etc.)</a>
       <div class="note-box">
-        UPI payments here aren't auto-verified (this page isn't linked to a payment gateway). Tap "Pay with Google Pay" if you have the app, or "Pay with Other UPI App" for PhonePe/Paytm/etc. After paying, tap "I've Paid" below — it opens WhatsApp with your full order pre-filled to send to us. We'll confirm once we see the payment.
+        Tap above to pay — it opens Google Pay directly (or asks which app to use). Once you return here after paying, we'll automatically show your confirmation and notify us on WhatsApp. UPI payments aren't auto-verified on our end (no payment gateway involved), so we'll confirm receipt on our side.
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- CONFIRMATION -->
+      <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
+        📦 Delivery takes 3–4 business days.<br>Need it urgently? <a href="#" id="callLinkPayment" style="color:var(--success);font-weight:700;">Call us directly</a>.
 <div class="overlay" id="confirmOverlay">
   <div class="sheet">
     <div class="confirm-box">
       <div class="tick">✓</div>
-      <h3>Order Ready to Send</h3>
+      <h3>Order Confirmed</h3>
       <p style="font-size:13px;color:#8a7a68;">Your order ID for reference:</p>
       <div class="order-id" id="orderId">RKH-0000</div>
-      <p style="font-size:12.5px;color:#8a7a68;">Save a screenshot of this screen for your records.</p>
+      <div id="confirmSummary" style="text-align:left;font-size:12.5px;color:#5a4a3a;margin:12px 0;background:var(--thread);border-radius:10px;padding:12px;"></div>
+      <p style="font-size:12px;color:#8a7a68;">If WhatsApp didn't open automatically, tap below to send your order to us.</p>
+      <a class="secondary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Send to WhatsApp</a>
+      <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
+        📦 Delivery takes 3–4 business days.<br>Need it urgently? <a href="#" id="callLinkConfirm" style="color:var(--success);font-weight:700;">Call us directly</a>.
+      </div>
       <button class="primary-btn" onclick="closeSheet('confirmOverlay'); resetCart();">Done</button>
     </div>
   </div>
@@ -480,7 +481,57 @@ const CONFIG = {
   // If your sheet's "Image" column just has a filename like "rakhi1.jpg",
   // this prefix is added automatically to build the full path.
   imageFolder: "",
+
+  // <-- OPTIONAL: a second published sheet (tab) with two columns: Key | Value
+  // Rows expected: "localCity" | Chennai   and   "shippingFee" | 60
+  // Leave blank to skip shipping charges entirely.
+  settingsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYymLl_OynZr3BCicYkGCNJWuVdDFUi1dHU0jgubZOay829zIS-i3YaraAyFtlsLrrQcklG9__cSct/pub?gid=792185534&single=true&output=csv",
+
+  // <-- OPTIONAL: your Google Apps Script "Web app" URL for logging orders
+  // to a private Google Sheet only you can see. See setup notes below.
+  // Leave blank to skip order logging (WhatsApp will still work).
+  ordersWebhookUrl: "",
 };
+
+/* =========================================================
+   HOW SHIPPING WORKS
+   Make a second tab in your Google Sheet (e.g. "Settings") with:
+     Key           | Value
+     localCity     | Chennai
+     shippingFee   | 60
+   Publish just that tab to web as CSV (File → Share → Publish to web
+   → choose the "Settings" sheet → CSV), and paste the link into
+   CONFIG.settingsCsvUrl. Whenever a customer's City doesn't match
+   "localCity", the shippingFee is automatically added to their total.
+   Change the fee anytime in the sheet — no code changes needed.
+   ========================================================= */
+
+/* =========================================================
+   HOW ORDER LOGGING WORKS (private — only you can see it)
+   1. Make a new Google Sheet (can be a new tab in the same one).
+      Name the tab exactly: Orders
+      Row 1 headers: Timestamp | Order ID | Items | Subtotal | Shipping | Total | Name | Phone | Address | City | State | Pincode | Note
+   2. In that sheet: Extensions → Apps Script
+   3. Delete any starter code and paste:
+
+      function doPost(e) {
+        var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Orders");
+        var data = JSON.parse(e.postData.contents);
+        sheet.appendRow([
+          new Date(), data.orderId, data.items, data.subtotal,
+          data.shipping, data.total, data.name, data.phone,
+          data.address, data.city, data.state, data.pincode, data.note
+        ]);
+        return ContentService.createTextOutput("OK");
+      }
+
+   4. Click Deploy → New deployment → gear icon → Web app
+      Execute as: Me   |   Who has access: Anyone
+      Click Deploy, authorize when asked, then copy the Web app URL
+   5. Paste that URL into CONFIG.ordersWebhookUrl above
+   This sheet is NOT published to the web, so only you (signed into
+   your Google account) can ever see it — customer data stays private.
+   ========================================================= */
 
 /* =========================================================
    HOW THE PRODUCT SHEET WORKS
@@ -513,6 +564,29 @@ let activeCat = "All";
 let cart = {};
 let PRODUCTS = [];
 let CATS = ["All"];
+let SETTINGS = { localCity: "Chennai", shippingFee: 0 };
+let currentOrder = null;
+let paymentArmed = false;
+
+/* ================= LOAD SHIPPING SETTINGS ================= */
+async function loadSettings(){
+  if(!CONFIG.settingsCsvUrl || CONFIG.settingsCsvUrl.trim()==='') return;
+  try{
+    const res = await fetch(CONFIG.settingsCsvUrl);
+    const text = await res.text();
+    text.split(/\r?\n/).forEach(line=>{
+      const parts = line.split(',');
+      const key = (parts[0]||'').trim().toLowerCase();
+      const val = (parts[1]||'').trim().replace(/^"|"$/g,'');
+      if(key === 'localcity' && val) SETTINGS.localCity = val;
+      if(key === 'shippingfee' && val) SETTINGS.shippingFee = Number(val) || 0;
+    });
+  }catch(e){ console.error('Could not load shipping settings, using defaults:', e); }
+}
+function computeShipping(city){
+  if(!city) return 0;
+  return city.trim().toLowerCase() === SETTINGS.localCity.trim().toLowerCase() ? 0 : SETTINGS.shippingFee;
+}
 
 /* ================= CSV PARSER (handles quoted commas) ================= */
 function parseCSV(text){
@@ -630,6 +704,7 @@ function renderGrid(){
     gridEl.appendChild(card);
   });
 }
+loadSettings();
 loadProducts();
 
 function addItem(id){ cart[id] = 1; renderGrid(); updateFab(); }
@@ -690,6 +765,7 @@ function renderCartSheet(){
   totalsEl.innerHTML = `
     <div class="totals-row"><span>Items</span><span>${cartCount()}</span></div>
     <div class="totals-row grand"><span>Total</span><span>₹${cartTotal()}</span></div>
+    <p style="font-size:11px;color:#a08a70;margin-top:6px;">Shipping (if applicable outside ${SETTINGS.localCity}) is added at checkout based on delivery city.</p>
   `;
 }
 
@@ -764,19 +840,51 @@ async function lookupPincode(code){
 function goToPayment(){
   if(!validateDetails()) return;
   closeSheet('detailsOverlay');
-  document.getElementById('payAmount').textContent = '₹'+cartTotal();
-  const params = `pa=${encodeURIComponent(CONFIG.upiId)}&pn=${encodeURIComponent(CONFIG.storeName)}&am=${cartTotal()}&cu=INR&tn=${encodeURIComponent('Rakhi Order Payment')}`;
+  const city = document.getElementById('custCity').value.trim();
+  const subtotal = cartTotal();
+  const shipping = computeShipping(city);
+  const grandTotal = subtotal + shipping;
+
+  const breakdownEl = document.getElementById('payBreakdown');
+  breakdownEl.innerHTML = `
+    <div class="totals-row"><span>Subtotal</span><span>₹${subtotal}</span></div>
+    ${shipping > 0 ? `<div class="totals-row"><span>Shipping (outside ${SETTINGS.localCity})</span><span>₹${shipping}</span></div>` : ''}
+  `;
+  document.getElementById('payAmount').textContent = '₹'+grandTotal;
+
+  const params = `pa=${encodeURIComponent(CONFIG.upiId)}&pn=${encodeURIComponent(CONFIG.storeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Rakhi Order Payment')}`;
   document.getElementById('upiBtn').href = `upi://pay?${params}`;
-  document.getElementById('gpayBtn').href = `tez://upi/pay?${params}`;
+  currentOrder = null; // fresh order context for this checkout
   showSheet('paymentOverlay');
 }
 
-/* ================= SEND ORDER VIA WHATSAPP ================= */
+/* ================= AUTO-DETECT RETURN FROM PAYMENT APP =================
+   Browsers won't let us auto-open WhatsApp without a user gesture, so we
+   arm a one-time listener when "Pay via UPI" is tapped (that tap IS the
+   gesture). When the tab becomes visible again — i.e. the person has come
+   back from Google Pay — we treat that as "payment attempted" and move
+   straight to confirmation, attempting to open WhatsApp automatically. */
+function armPaymentReturn(){
+  if(paymentArmed) return;
+  paymentArmed = true;
+  document.addEventListener('visibilitychange', onReturnFromPayment);
+  window.addEventListener('focus', onReturnFromPayment);
+}
+function onReturnFromPayment(){
+  if(document.visibilityState && document.visibilityState !== 'visible') return;
+  document.removeEventListener('visibilitychange', onReturnFromPayment);
+  window.removeEventListener('focus', onReturnFromPayment);
+  paymentArmed = false;
+  setTimeout(showConfirmation, 500);
+}
+
+/* ================= PREPARE ORDER (computed once per checkout) ================= */
 function generateOrderId(){
   return 'RKH-' + Math.floor(1000 + Math.random()*9000);
 }
+function prepareOrder(){
+  if(currentOrder) return currentOrder;
 
-function sendOrder(){
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
   const address = document.getElementById('custAddress').value.trim();
@@ -790,13 +898,22 @@ function sendOrder(){
     const p = PRODUCTS.find(x=>x.id==id);
     return `• ${p.name} × ${qty} = ₹${p.price*qty}`;
   }).join('\n');
+  const itemsPlain = Object.entries(cart).map(([id,qty])=>{
+    const p = PRODUCTS.find(x=>x.id==id);
+    return `${p.name} x${qty}`;
+  }).join(', ');
+
+  const subtotal = cartTotal();
+  const shipping = computeShipping(city);
+  const total = subtotal + shipping;
 
   const message =
 `New Rakhi Order (${orderId})
 
 ${itemLines}
 
-Total: ₹${cartTotal()}
+Subtotal: ₹${subtotal}${shipping > 0 ? `\nShipping: ₹${shipping}` : ''}
+Total: ₹${total}
 
 Customer Details:
 Name: ${name}
@@ -807,17 +924,51 @@ State: ${state}
 Pincode: ${pincode}${pincodeVerified ? ' (verified)' : ''}
 ${note ? 'Note: '+note : ''}
 
-Payment: Paid via UPI (please confirm receipt)`;
+Payment: Paid via UPI (please confirm receipt)
+Delivery: 3–4 business days (urgent orders — call directly)`;
 
   const waLink = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
-  document.getElementById('orderId').textContent = orderId;
+
+  currentOrder = { orderId, name, phone, address, city, state, pincode, note, subtotal, shipping, total, itemsPlain, waLink };
+  logOrderToSheet(currentOrder);
+  return currentOrder;
+}
+
+/* ================= LOG ORDER TO PRIVATE GOOGLE SHEET =================
+   Fire-and-forget: doesn't block the customer's flow even if this fails
+   or CONFIG.ordersWebhookUrl hasn't been set up yet. */
+function logOrderToSheet(order){
+  if(!CONFIG.ordersWebhookUrl || CONFIG.ordersWebhookUrl.trim()==='') return;
+  fetch(CONFIG.ordersWebhookUrl, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(order),
+  }).catch(e=> console.error('Order logging failed (order still sent via WhatsApp):', e));
+}
+
+/* ================= SHOW CONFIRMATION + ATTEMPT AUTO WHATSAPP ================= */
+function showConfirmation(){
+  const order = prepareOrder();
+  document.getElementById('orderId').textContent = order.orderId;
+  document.getElementById('confirmSummary').innerHTML = `
+    <b>${order.itemsPlain}</b><br>
+    Subtotal: ₹${order.subtotal}${order.shipping > 0 ? `<br>Shipping: ₹${order.shipping}` : ''}<br>
+    <b>Total: ₹${order.total}</b><br><br>
+    Delivering to: ${order.address}, ${order.city}, ${order.state} - ${order.pincode}
+  `;
+  document.getElementById('waFallbackBtn').href = order.waLink;
   closeSheet('paymentOverlay');
   showSheet('confirmOverlay');
-  window.open(waLink, '_blank');
+  // Best-effort auto-open — may be blocked by the browser since this
+  // wasn't a direct tap; the visible fallback button above covers that.
+  try{ window.location.href = order.waLink; }catch(e){}
 }
 
 function resetCart(){
   cart = {};
+  currentOrder = null;
+  paymentArmed = false;
   document.getElementById('custName').value='';
   document.getElementById('custPhone').value='';
   document.getElementById('custAddress').value='';
@@ -829,6 +980,12 @@ function resetCart(){
   pincodeVerified = false;
   renderGrid(); updateFab();
 }
+
+/* ================= SET CALL LINKS FROM CONFIG ================= */
+['callLinkPayment','callLinkConfirm'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.href = `tel:+${CONFIG.whatsappNumber}`;
+});
 </script>
 </body>
 </html>
