@@ -439,10 +439,11 @@
     <div class="confirm-box">
       <p style="font-size:13px;margin-bottom:4px;color:#8a7a68;">Amount to pay</p>
       <h2 style="color:var(--maroon);font-size:30px;" id="payAmount">₹0</h2>
-      <a class="primary-btn" style="display:block;text-decoration:none;box-sizing:border-box;" id="upiBtn" href="#">Pay via UPI App</a>
+      <a class="primary-btn" style="display:block;text-decoration:none;box-sizing:border-box;background:#1a73e8;" id="gpayBtn" href="#">Pay with Google Pay</a>
+      <a class="secondary-btn" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;" id="upiBtn" href="#">Pay with Other UPI App</a>
       <button class="secondary-btn" onclick="sendOrder()">I've Paid — Send Order Details</button>
       <div class="note-box">
-        UPI payments here aren't auto-verified (this page isn't linked to a payment gateway). After paying, tap the button above — it opens WhatsApp with your full order pre-filled to send to us. We'll confirm once we see the payment.
+        UPI payments here aren't auto-verified (this page isn't linked to a payment gateway). Tap "Pay with Google Pay" if you have the app, or "Pay with Other UPI App" for PhonePe/Paytm/etc. After paying, tap "I've Paid" below — it opens WhatsApp with your full order pre-filled to send to us. We'll confirm once we see the payment.
       </div>
     </div>
   </div>
@@ -469,7 +470,7 @@
    ========================================================= */
 const CONFIG = {
   storeName: "Your Rakhi Store",
-  upiId: "yourupi@bank",          // <-- put your real UPI ID here
+  upiId: "asp.vishal94@okaxis",   // <-- your real UPI ID
   whatsappNumber: "919043048318", // <-- your WhatsApp number with country code, no + or spaces
 
   // <-- PASTE YOUR PUBLISHED GOOGLE SHEET CSV LINK HERE (see setup notes below)
@@ -764,8 +765,9 @@ function goToPayment(){
   if(!validateDetails()) return;
   closeSheet('detailsOverlay');
   document.getElementById('payAmount').textContent = '₹'+cartTotal();
-  const upiLink = `upi://pay?pa=${encodeURIComponent(CONFIG.upiId)}&pn=${encodeURIComponent(CONFIG.storeName)}&am=${cartTotal()}&cu=INR&tn=${encodeURIComponent('Rakhi Order Payment')}`;
-  document.getElementById('upiBtn').href = upiLink;
+  const params = `pa=${encodeURIComponent(CONFIG.upiId)}&pn=${encodeURIComponent(CONFIG.storeName)}&am=${cartTotal()}&cu=INR&tn=${encodeURIComponent('Rakhi Order Payment')}`;
+  document.getElementById('upiBtn').href = `upi://pay?${params}`;
+  document.getElementById('gpayBtn').href = `tez://upi/pay?${params}`;
   showSheet('paymentOverlay');
 }
 
