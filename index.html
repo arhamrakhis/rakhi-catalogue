@@ -442,7 +442,7 @@
       <h2 style="color:var(--maroon);font-size:30px;" id="payAmount">₹0</h2>
       <a class="primary-btn" style="display:block;text-decoration:none;box-sizing:border-box;" id="upiBtn" href="#" onclick="armPaymentReturn()">Pay with Google Pay</a>
       <div class="note-box">
-        Tap above to pay via Google Pay. Once you return here after paying, we'll automatically show your confirmation and notify us on WhatsApp. UPI payments aren't auto-verified on our end (no payment gateway involved), so we'll confirm receipt on our side.<br><br>
+        Tap above to pay via Google Pay. When you return here after paying, we'll show your order confirmation — just tap one button there to send it to us on WhatsApp. UPI payments aren't auto-verified on our end (no payment gateway involved), so we'll confirm receipt on our side.<br><br>
         <b>Don't have Google Pay installed?</b> Pay ₹<span id="payAmountInline"></span> manually to UPI ID <b id="upiIdInline"></b>, then message us on WhatsApp with your order ID.
       </div>
       <p style="text-align:center;font-size:11.5px;"><a href="javascript:void(0)" onclick="showConfirmation()" style="color:#a08a70;text-decoration:underline;">Already paid and nothing happened? Tap here</a></p>
@@ -456,8 +456,8 @@
       <p style="font-size:13px;color:#8a7a68;">Your order ID for reference:</p>
       <div class="order-id" id="orderId">RKH-0000</div>
       <div id="confirmSummary" style="text-align:left;font-size:12.5px;color:#5a4a3a;margin:12px 0;background:var(--thread);border-radius:10px;padding:12px;"></div>
-      <p style="font-size:12px;color:#8a7a68;">If WhatsApp didn't open automatically, tap below to send your order to us.</p>
-      <a class="secondary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Send to WhatsApp</a>
+      <p style="font-size:12px;color:#8a7a68;">Completed the payment in Google Pay? Tap below to send your order to us.</p>
+      <a class="primary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Send Order to WhatsApp</a>
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
         📦 Delivery takes 3–4 business days.<br>Need it urgently? <a href="#" id="callLinkConfirm" style="color:var(--success);font-weight:700;">Call us directly</a>.
       </div>
@@ -982,9 +982,10 @@ function showConfirmation(){
   document.getElementById('waFallbackBtn').href = order.waLink;
   closeSheet('paymentOverlay');
   showSheet('confirmOverlay');
-  // Best-effort auto-open — may be blocked by the browser since this
-  // wasn't a direct tap; the visible fallback button above covers that.
-  try{ window.location.href = order.waLink; }catch(e){}
+  // We deliberately don't auto-open WhatsApp here — there's no way for this
+  // page to know whether the payment in Google Pay actually completed, so
+  // guessing based on timing was jumping ahead too eagerly. One clear tap
+  // on the button below is the reliable way to send the order.
 }
 
 function resetCart(){
