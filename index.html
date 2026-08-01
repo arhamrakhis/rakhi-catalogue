@@ -440,14 +440,35 @@
       <div id="payBreakdown" style="text-align:left;margin-bottom:10px;"></div>
       <p style="font-size:13px;margin-bottom:4px;color:#8a7a68;">Amount to pay</p>
       <h2 style="color:var(--maroon);font-size:30px;" id="payAmount">₹0</h2>
-      <a class="primary-btn" style="display:block;text-decoration:none;box-sizing:border-box;" id="upiBtn" href="#" onclick="armPaymentReturn()">Pay with Google Pay</a>
-      <div class="note-box">
-        Tap above to pay via Google Pay. When you return here after paying, we'll show your order confirmation — just tap one button there to send it to us on WhatsApp. UPI payments aren't auto-verified on our end (no payment gateway involved), so we'll confirm receipt on our side.<br><br>
-        <b>Don't have Google Pay installed?</b> Pay ₹<span id="payAmountInline"></span> manually to UPI ID <b id="upiIdInline"></b>, then message us on WhatsApp with your order ID.
+
+      <div style="background:var(--thread);border-radius:10px;padding:12px;margin:14px 0;text-align:left;">
+        <p style="font-size:11.5px;color:#8a7a68;margin:0 0 4px;">Pay to this UPI ID via your Google Pay / UPI app</p>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <b id="upiIdInline" style="font-size:15px;flex:1;word-break:break-all;"></b>
+          <button onclick="copyUpiId()" style="flex:0 0 auto;padding:8px 14px;border:none;border-radius:8px;background:var(--maroon);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Copy</button>
+        </div>
+        <p id="copyStatus" style="font-size:11px;color:var(--success);margin:6px 0 0;display:none;">✓ Copied to clipboard</p>
       </div>
-      <p style="text-align:center;font-size:11.5px;"><a href="javascript:void(0)" onclick="showConfirmation()" style="color:#a08a70;text-decoration:underline;">Already paid and nothing happened? Tap here</a></p>
+
+      <div class="field" style="text-align:left;">
+        <label>GPay / UPI Transaction Reference Number</label>
+        <input type="text" id="txnRef" placeholder="e.g. 123456789012">
+        <div class="error-text" id="errTxnRef">Please enter the transaction reference number after paying</div>
+      </div>
+
+      <button class="primary-btn" onclick="confirmOrder()">Confirm &amp; Send Order</button>
+
+      <div class="note-box">
+        Open your Google Pay (or any UPI app), pay the amount above to the UPI ID shown, then copy the transaction reference number from your payment app and paste it here before confirming. We'll verify it before shipping.
+      </div>
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
         📦 Delivery takes 3–4 business days.<br>Need it urgently? <a href="#" id="callLinkPayment" style="color:var(--success);font-weight:700;">Call us directly</a>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMATION -->
 <div class="overlay" id="confirmOverlay">
   <div class="sheet">
     <div class="confirm-box">
@@ -456,8 +477,8 @@
       <p style="font-size:13px;color:#8a7a68;">Your order ID for reference:</p>
       <div class="order-id" id="orderId">RKH-0000</div>
       <div id="confirmSummary" style="text-align:left;font-size:12.5px;color:#5a4a3a;margin:12px 0;background:var(--thread);border-radius:10px;padding:12px;"></div>
-      <p style="font-size:12px;color:#8a7a68;">Completed the payment in Google Pay? Tap below to send your order to us.</p>
-      <a class="primary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Send Order to WhatsApp</a>
+      <p style="font-size:12px;color:#8a7a68;">If WhatsApp didn't open automatically, tap below.</p>
+      <a class="secondary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Send Order to WhatsApp</a>
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
         📦 Delivery takes 3–4 business days.<br>Need it urgently? <a href="#" id="callLinkConfirm" style="color:var(--success);font-weight:700;">Call us directly</a>.
       </div>
@@ -510,20 +531,37 @@ const CONFIG = {
 
 /* =========================================================
    HOW ORDER LOGGING WORKS (private — only you can see it)
-   1. Make a new Google Sheet (can be a new tab in the same one).
-      Name the tab exactly: Orders
-      Row 1 headers: Timestamp | Order ID | Items | Subtotal | Shipping | Total | Name | Phone | Address | City | State | Pincode | Note
-   2. In that sheet: Extensions → Apps Script
+   This gives you a running record of every order — customer details,
+   payment reference, and exactly what/how much was sold — so you can
+   track sales, inventory, and revenue anytime, even if a WhatsApp
+   message is ever missed.
+
+   1. Make one new Google Sheet with TWO tabs (rename Sheet1, add a second):
+      Tab "Orders" — headers in row 1:
+        Timestamp | Order ID | Txn Ref | Subtotal | Shipping | Total | Name | Phone | Address | City | State | Pincode | Note
+      Tab "OrderItems" — headers in row 1:
+        Timestamp | Order ID | Product | Category | Qty | Price | Line Total
+
+   2. In that spreadsheet: Extensions → Apps Script
    3. Delete any starter code and paste:
 
       function doPost(e) {
-        var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Orders");
+        var ss = SpreadsheetApp.getActiveSpreadsheet();
+        var orders = ss.getSheetByName("Orders");
+        var items = ss.getSheetByName("OrderItems");
         var data = JSON.parse(e.postData.contents);
-        sheet.appendRow([
-          new Date(), data.orderId, data.items, data.subtotal,
-          data.shipping, data.total, data.name, data.phone,
-          data.address, data.city, data.state, data.pincode, data.note
+        var now = new Date();
+
+        orders.appendRow([
+          now, data.orderId, data.txnRef, data.subtotal, data.shipping,
+          data.total, data.name, data.phone, data.address, data.city,
+          data.state, data.pincode, data.note
         ]);
+
+        (data.lineItems || []).forEach(function(li){
+          items.appendRow([now, data.orderId, li.name, li.cat, li.qty, li.price, li.lineTotal]);
+        });
+
         return ContentService.createTextOutput("OK");
       }
 
@@ -531,8 +569,16 @@ const CONFIG = {
       Execute as: Me   |   Who has access: Anyone
       Click Deploy, authorize when asked, then copy the Web app URL
    5. Paste that URL into CONFIG.ordersWebhookUrl above
+
    This sheet is NOT published to the web, so only you (signed into
    your Google account) can ever see it — customer data stays private.
+
+   FOR INSIGHTS: once orders start flowing in, select the OrderItems tab
+   → Insert → Pivot table → group rows by Product (or Category), and
+   summarize by SUM of Qty and SUM of Line Total. This instantly shows
+   you units sold and revenue per product — refreshes automatically as
+   new orders come in. Same idea on the Orders tab for customer/location
+   patterns (e.g. group by City to see where orders come from).
    ========================================================= */
 
 /* =========================================================
@@ -568,7 +614,6 @@ let PRODUCTS = [];
 let CATS = ["All"];
 let SETTINGS = { localCity: "Chennai", shippingFee: 0 };
 let currentOrder = null;
-let paymentArmed = false;
 
 /* ================= LOAD SHIPPING SETTINGS ================= */
 async function loadSettings(){
@@ -839,10 +884,6 @@ async function lookupPincode(code){
   }
 }
 
-function isIOS(){
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-}
-
 function goToPayment(){
   if(!validateDetails()) return;
   closeSheet('detailsOverlay');
@@ -857,47 +898,43 @@ function goToPayment(){
     ${shipping > 0 ? `<div class="totals-row"><span>Shipping (outside ${SETTINGS.localCity})</span><span>₹${shipping}</span></div>` : ''}
   `;
   document.getElementById('payAmount').textContent = '₹'+grandTotal;
-  document.getElementById('payAmountInline').textContent = grandTotal;
   document.getElementById('upiIdInline').textContent = CONFIG.upiId;
-
-  const params = `pa=${encodeURIComponent(CONFIG.upiId)}&pn=${encodeURIComponent(CONFIG.storeName)}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent('Rakhi Order Payment')}`;
-  // iOS Google Pay only recognises its own gpay:// scheme; Android recognises the standard upi:// scheme.
-  const scheme = isIOS() ? 'gpay://upi/pay' : 'upi://pay';
-  document.getElementById('upiBtn').href = `${scheme}?${params}`;
+  document.getElementById('txnRef').value = '';
+  document.getElementById('errTxnRef').style.display = 'none';
+  document.getElementById('copyStatus').style.display = 'none';
   currentOrder = null; // fresh order context for this checkout
   showSheet('paymentOverlay');
 }
 
-/* ================= AUTO-DETECT RETURN FROM PAYMENT APP =================
-   Browsers won't let us auto-open WhatsApp without a user gesture, so we
-   arm a one-time listener when "Pay via UPI" is tapped (that tap IS the
-   gesture). When the tab becomes visible again — i.e. the person has come
-   back from Google Pay — we treat that as "payment attempted" and move
-   straight to confirmation, attempting to open WhatsApp automatically.
-   IMPORTANT: we only trust this if the page was actually hidden (a real
-   app-switch happened) for a meaningful amount of time — a failed deep
-   link (e.g. Google Pay not installed) never actually hides the page, so
-   this guards against firing prematurely. */
-let armTime = 0;
-let wasHidden = false;
-function armPaymentReturn(){
-  if(paymentArmed) return;
-  paymentArmed = true;
-  armTime = Date.now();
-  wasHidden = false;
-  document.addEventListener('visibilitychange', onVisibilityChange);
+function copyUpiId(){
+  const text = CONFIG.upiId;
+  const statusEl = document.getElementById('copyStatus');
+  const showCopied = ()=>{ statusEl.style.display = 'block'; setTimeout(()=> statusEl.style.display='none', 2500); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(showCopied).catch(()=> alert('Could not copy automatically — please copy manually: '+text));
+  } else {
+    // Fallback for older browsers without Clipboard API
+    const temp = document.createElement('input');
+    temp.value = text;
+    document.body.appendChild(temp);
+    temp.select();
+    try{ document.execCommand('copy'); showCopied(); }
+    catch(e){ alert('Could not copy automatically — please copy manually: '+text); }
+    document.body.removeChild(temp);
+  }
 }
-function onVisibilityChange(){
-  if(document.visibilityState === 'hidden'){
-    wasHidden = true;
+
+function confirmOrder(){
+  const txnRef = document.getElementById('txnRef').value.trim();
+  const errEl = document.getElementById('errTxnRef');
+  if(!txnRef || txnRef.length < 4){
+    errEl.style.display = 'block';
     return;
   }
-  // visibilityState is 'visible' again
-  if(!wasHidden) return;               // never actually left — ignore (failed deep link)
-  if(Date.now() - armTime < 1200) return; // too fast to be a real app switch — ignore
-  document.removeEventListener('visibilitychange', onVisibilityChange);
-  paymentArmed = false;
-  setTimeout(showConfirmation, 400);
+  errEl.style.display = 'none';
+  currentOrder = null; // force fresh prepare including this txnRef
+  window.pendingTxnRef = txnRef;
+  showConfirmation();
 }
 
 /* ================= PREPARE ORDER (computed once per checkout) ================= */
@@ -914,16 +951,15 @@ function prepareOrder(){
   const city = document.getElementById('custCity').value.trim();
   const state = document.getElementById('custState').value.trim();
   const note = document.getElementById('custNote').value.trim();
+  const txnRef = window.pendingTxnRef || '';
   const orderId = generateOrderId();
 
-  const itemLines = Object.entries(cart).map(([id,qty])=>{
+  const lineItems = Object.entries(cart).map(([id,qty])=>{
     const p = PRODUCTS.find(x=>x.id==id);
-    return `• ${p.name} × ${qty} = ₹${p.price*qty}`;
-  }).join('\n');
-  const itemsPlain = Object.entries(cart).map(([id,qty])=>{
-    const p = PRODUCTS.find(x=>x.id==id);
-    return `${p.name} x${qty}`;
-  }).join(', ');
+    return { name:p.name, cat:p.cat, qty, price:p.price, lineTotal:p.price*qty };
+  });
+  const itemLines = lineItems.map(li=> `• ${li.name} × ${li.qty} = ₹${li.lineTotal}`).join('\n');
+  const itemsPlain = lineItems.map(li=> `${li.name} x${li.qty}`).join(', ');
 
   const subtotal = cartTotal();
   const shipping = computeShipping(city);
@@ -946,19 +982,21 @@ State: ${state}
 Pincode: ${pincode}${pincodeVerified ? ' (verified)' : ''}
 ${note ? 'Note: '+note : ''}
 
-Payment: Paid via UPI (please confirm receipt)
+Payment: UPI — Transaction Ref: ${txnRef} (please verify before shipping)
 Delivery: 3–4 business days (urgent orders — call directly)`;
 
   const waLink = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
 
-  currentOrder = { orderId, name, phone, address, city, state, pincode, note, subtotal, shipping, total, itemsPlain, waLink };
+  currentOrder = { orderId, name, phone, address, city, state, pincode, note, txnRef, subtotal, shipping, total, itemsPlain, lineItems, waLink };
   logOrderToSheet(currentOrder);
   return currentOrder;
 }
 
 /* ================= LOG ORDER TO PRIVATE GOOGLE SHEET =================
    Fire-and-forget: doesn't block the customer's flow even if this fails
-   or CONFIG.ordersWebhookUrl hasn't been set up yet. */
+   or CONFIG.ordersWebhookUrl hasn't been set up yet. Sends both order-level
+   details and a line-item breakdown, so you can track quantity sold per
+   product/category for inventory and sales insights. */
 function logOrderToSheet(order){
   if(!CONFIG.ordersWebhookUrl || CONFIG.ordersWebhookUrl.trim()==='') return;
   fetch(CONFIG.ordersWebhookUrl, {
@@ -969,31 +1007,30 @@ function logOrderToSheet(order){
   }).catch(e=> console.error('Order logging failed (order still sent via WhatsApp):', e));
 }
 
-/* ================= SHOW CONFIRMATION + ATTEMPT AUTO WHATSAPP ================= */
+/* ================= SHOW CONFIRMATION + SEND WHATSAPP =================
+   This runs directly from the "Confirm & Send Order" tap — a genuine user
+   gesture — so opening WhatsApp here is reliable across browsers, unlike
+   trying to guess when someone "returns" from a payment app. */
 function showConfirmation(){
   const order = prepareOrder();
   document.getElementById('orderId').textContent = order.orderId;
   document.getElementById('confirmSummary').innerHTML = `
     <b>${order.itemsPlain}</b><br>
     Subtotal: ₹${order.subtotal}${order.shipping > 0 ? `<br>Shipping: ₹${order.shipping}` : ''}<br>
-    <b>Total: ₹${order.total}</b><br><br>
+    <b>Total: ₹${order.total}</b><br>
+    Transaction Ref: ${order.txnRef}<br><br>
     Delivering to: ${order.address}, ${order.city}, ${order.state} - ${order.pincode}
   `;
   document.getElementById('waFallbackBtn').href = order.waLink;
   closeSheet('paymentOverlay');
   showSheet('confirmOverlay');
-  // We deliberately don't auto-open WhatsApp here — there's no way for this
-  // page to know whether the payment in Google Pay actually completed, so
-  // guessing based on timing was jumping ahead too eagerly. One clear tap
-  // on the button below is the reliable way to send the order.
+  window.open(order.waLink, '_blank');
 }
 
 function resetCart(){
   cart = {};
   currentOrder = null;
-  paymentArmed = false;
-  wasHidden = false;
-  document.removeEventListener('visibilitychange', onVisibilityChange);
+  window.pendingTxnRef = '';
   document.getElementById('custName').value='';
   document.getElementById('custPhone').value='';
   document.getElementById('custAddress').value='';
