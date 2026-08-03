@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ARHAM Rakhis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Poppins:wght@400;500;600;700&family=Poppins:ital@1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Baloo+2:wght@500;700&family=Playfair+Display:wght@500;700&family=Cormorant+Garamond:wght@600;700&family=Poppins:wght@400;500;600;700&family=Poppins:ital@1&display=swap" rel="stylesheet">
 <style>
   /* =========================================================
      EDIT ZONE 1 — your brand basics live here as CSS variables
+     These are the DEFAULT colours. Each category can override
+     them at runtime — see THEMES in the script section below.
      ========================================================= */
   :root{
     --maroon:#7A1F2B;
@@ -20,6 +22,10 @@
     --thread:#F1DFC2;
     --ink:#3A2418;
     --success:#3F7A4E;
+    --card-bg:#FFFFFF;
+    --card-text:#3A2418;
+    --input-border:#e6d6bd;
+    --heading-font:'Rozha One', serif;
     --shadow: 0 8px 24px rgba(122,31,43,0.15);
   }
 
@@ -30,11 +36,13 @@
     font-family:'Poppins',sans-serif;
     color:var(--ink);
     padding-bottom:90px;
+    transition: background-color .5s ease, color .5s ease;
   }
   h1,h2,h3,.display{
-    font-family:'Rozha One', serif;
+    font-family:var(--heading-font);
     font-weight:400;
     margin:0;
+    transition: font-family .3s ease, color .5s ease;
   }
 
   /* ---------- Header ---------- */
@@ -45,6 +53,7 @@
     text-align:center;
     position:relative;
     overflow:hidden;
+    transition: background .6s ease;
   }
   .hero::after{
     content:"";
@@ -91,13 +100,13 @@
     padding:8px 16px;
     border-radius:999px;
     border:1.5px solid var(--maroon);
-    background:#fff;
+    background:var(--card-bg);
     color:var(--maroon);
     font-size:13px;
     font-weight:600;
     white-space:nowrap;
     cursor:pointer;
-    transition:.15s;
+    transition: background .4s ease, color .4s ease, border-color .4s ease;
   }
   .chip.active{
     background:var(--maroon);
@@ -105,6 +114,38 @@
   }
 
   /* ---------- Product grid ---------- */
+  .grid-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:4px 16px 8px;
+    font-size:12.5px;
+  }
+  .product-count{ color:#8a7a68; }
+  #sortSelect{
+    border:1.5px solid var(--input-border);
+    background:var(--card-bg);
+    color:var(--card-text);
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:12.5px;
+    font-family:'Poppins',sans-serif;
+    cursor:pointer;
+    transition: background .4s ease, color .4s ease, border-color .4s ease;
+  }
+  .sold-out-badge{
+    position:absolute;
+    top:8px; left:8px;
+    background:rgba(20,15,10,0.82);
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    padding:4px 9px;
+    border-radius:999px;
+    z-index:2;
+  }
   .grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -121,12 +162,14 @@
     .cart-fab{ max-width:1040px; left:50%; right:auto; transform:translateX(-50%); }
   }
   .card{
-    background:#fff;
+    background:var(--card-bg);
+    color:var(--card-text);
     border-radius:14px;
     overflow:hidden;
     box-shadow:var(--shadow);
     display:flex;
     flex-direction:column;
+    transition: background .4s ease, color .4s ease, box-shadow .4s ease;
   }
   .card-img{
     height:150px;
@@ -249,8 +292,9 @@
   }
   .cart-item{
     display:flex; gap:10px; align-items:center;
-    background:#fff; border-radius:12px; padding:10px; margin-bottom:10px;
+    background:var(--card-bg); color:var(--card-text); border-radius:12px; padding:10px; margin-bottom:10px;
     box-shadow:var(--shadow);
+    transition: background .4s ease, color .4s ease;
   }
   .cart-item .thumb{
     width:46px;height:46px;border-radius:8px;flex:0 0 auto;
@@ -277,18 +321,20 @@
     font-size:14.5px;
     cursor:pointer;
     margin-top:10px;
+    transition: background .4s ease;
   }
   .secondary-btn{
     width:100%;
     padding:13px 0;
     border:1.5px solid var(--maroon);
     border-radius:10px;
-    background:#fff;
+    background:var(--card-bg);
     color:var(--maroon);
     font-weight:700;
     font-size:14.5px;
     cursor:pointer;
     margin-top:10px;
+    transition: background .4s ease, border-color .4s ease, color .4s ease;
   }
 
   .field{ margin-bottom:12px; }
@@ -297,10 +343,12 @@
     width:100%;
     padding:10px 12px;
     border-radius:8px;
-    border:1.5px solid #e6d6bd;
+    border:1.5px solid var(--input-border);
     font-family:'Poppins',sans-serif;
     font-size:13.5px;
-    background:#fff;
+    background:var(--card-bg);
+    color:var(--card-text);
+    transition: background .4s ease, border-color .4s ease, color .4s ease;
   }
   .field input:focus, .field textarea:focus{
     outline:2px solid var(--marigold);
@@ -316,11 +364,13 @@
   }
 
   .confirm-box{
-    background:#fff;
+    background:var(--card-bg);
+    color:var(--card-text);
     border-radius:14px;
     padding:18px;
     text-align:center;
     box-shadow:var(--shadow);
+    transition: background .4s ease, color .4s ease;
   }
   .confirm-box .tick{
     width:52px;height:52px;border-radius:50%;
@@ -364,6 +414,15 @@
 </div>
 
 <div class="cats" id="cats"></div>
+<div class="grid-toolbar">
+  <span id="productCount" class="product-count"></span>
+  <select id="sortSelect" onchange="renderGrid()">
+    <option value="featured">Featured</option>
+    <option value="price-asc">Price: Low to High</option>
+    <option value="price-desc">Price: High to Low</option>
+    <option value="name-asc">Name: A–Z</option>
+  </select>
+</div>
 <div class="grid" id="grid"></div>
 
 <!-- PRODUCT DETAIL / FULL IMAGE VIEW -->
@@ -728,6 +787,86 @@ async function loadProducts(){
   renderGrid();
 }
 
+/* =========================================================
+   CATEGORY THEMES — each category gets its own mood.
+   Add/tweak entries here to change any category's look.
+   Keys are matched against the Category text (case-insensitive,
+   partial match) so "Kids Rakhis" or "Kids" both hit "kids".
+   ========================================================= */
+const THEMES = {
+  default: {
+    maroon:"#7A1F2B", maroonDark:"#5A1521", marigold:"#E8871E", gold:"#C9A227",
+    magenta:"#B23A63", cream:"#FFF8ED", thread:"#F1DFC2", ink:"#3A2418",
+    cardBg:"#FFFFFF", cardText:"#3A2418", inputBorder:"#e6d6bd",
+    headingFont:"'Rozha One', serif",
+  },
+  kids: {
+    // Playful & colourful — bright candy tones, rounded bubbly heading font
+    maroon:"#E8467A", maroonDark:"#C22F60", marigold:"#FFB238", gold:"#3DB4E8",
+    magenta:"#FF8AC6", cream:"#FFF8E9", thread:"#FFE3B0", ink:"#4A2E1A",
+    cardBg:"#FFFFFF", cardText:"#4A2E1A", inputBorder:"#FFD9A0",
+    headingFont:"'Baloo 2', cursive",
+  },
+  jodis: {
+    // Romantic pair energy — warm rose & gold
+    maroon:"#A63A5F", maroonDark:"#7D2947", marigold:"#E39BB0", gold:"#C9A227",
+    magenta:"#D46A8C", cream:"#FFF3F2", thread:"#F7D9DE", ink:"#4A2438",
+    cardBg:"#FFFFFF", cardText:"#4A2438", inputBorder:"#F0C6D2",
+    headingFont:"'Rozha One', serif",
+  },
+  ladies: {
+    // Elegant floral pastel — plum & blush
+    maroon:"#A6508A", maroonDark:"#7C3A69", marigold:"#F3C1D6", gold:"#D9A441",
+    magenta:"#C777A5", cream:"#FFF6F9", thread:"#F6DDE9", ink:"#3F2436",
+    cardBg:"#FFFFFF", cardText:"#3F2436", inputBorder:"#F2D3E2",
+    headingFont:"'Cormorant Garamond', serif",
+  },
+  premium: {
+    // Rich & exquisite — deep charcoal, gold shimmer
+    maroon:"#C9A227", maroonDark:"#8a6f1a", marigold:"#E0C46C", gold:"#F0DDA0",
+    magenta:"#C9A227", cream:"#17130F", thread:"#2A231C", ink:"#F1E4C8",
+    cardBg:"#211B15", cardText:"#F1E4C8", inputBorder:"#4A3D28",
+    headingFont:"'Playfair Display', serif",
+  },
+  maulis: {
+    // Traditional & sacred — deep red thread, mustard, minimal
+    maroon:"#9B1B30", maroonDark:"#6E1223", marigold:"#D98324", gold:"#C9A227",
+    magenta:"#9B1B30", cream:"#FBF3E7", thread:"#EEDDBB", ink:"#3A2418",
+    cardBg:"#FFFFFF", cardText:"#3A2418", inputBorder:"#E8D8B8",
+    headingFont:"'Rozha One', serif",
+  },
+  singles: {
+    // Classic festive — same as default, kept as its own key for clarity
+    maroon:"#7A1F2B", maroonDark:"#5A1521", marigold:"#E8871E", gold:"#C9A227",
+    magenta:"#B23A63", cream:"#FFF8ED", thread:"#F1DFC2", ink:"#3A2418",
+    cardBg:"#FFFFFF", cardText:"#3A2418", inputBorder:"#e6d6bd",
+    headingFont:"'Rozha One', serif",
+  },
+};
+
+function themeForCategory(cat){
+  if(!cat || cat.toLowerCase()==='all') return THEMES.default;
+  const key = Object.keys(THEMES).find(k => cat.toLowerCase().includes(k));
+  return key ? THEMES[key] : THEMES.default;
+}
+
+function applyTheme(cat){
+  const t = themeForCategory(cat);
+  const root = document.documentElement.style;
+  root.setProperty('--maroon', t.maroon);
+  root.setProperty('--maroon-dark', t.maroonDark);
+  root.setProperty('--marigold', t.marigold);
+  root.setProperty('--gold', t.gold);
+  root.setProperty('--magenta', t.magenta);
+  root.setProperty('--cream', t.cream);
+  root.setProperty('--thread', t.thread);
+  root.setProperty('--ink', t.ink);
+  root.setProperty('--card-bg', t.cardBg);
+  root.setProperty('--card-text', t.cardText);
+  root.setProperty('--input-border', t.inputBorder);
+  root.setProperty('--heading-font', t.headingFont);
+}
+
 /* ================= RENDER CATEGORY CHIPS ================= */
 const catsEl = document.getElementById('cats');
 function renderCatChips(){
@@ -736,7 +875,7 @@ function renderCatChips(){
     const chip = document.createElement('div');
     chip.className = 'chip' + (c===activeCat ? ' active':'');
     chip.textContent = c;
-    chip.onclick = ()=>{ activeCat=c; renderCatChips(); renderGrid(); };
+    chip.onclick = ()=>{ activeCat=c; applyTheme(c); renderCatChips(); renderGrid(); };
     chip.dataset.cat = c;
     catsEl.appendChild(chip);
   });
@@ -744,9 +883,20 @@ function renderCatChips(){
 
 /* ================= RENDER PRODUCT GRID ================= */
 const gridEl = document.getElementById('grid');
+function sortList(list, mode){
+  const sorted = [...list];
+  if(mode === 'price-asc') sorted.sort((a,b)=> a.price - b.price);
+  else if(mode === 'price-desc') sorted.sort((a,b)=> b.price - a.price);
+  else if(mode === 'name-asc') sorted.sort((a,b)=> a.name.localeCompare(b.name));
+  return sorted;
+}
 function renderGrid(){
   gridEl.innerHTML = '';
-  const list = PRODUCTS.filter(p=> activeCat==="All" || p.cat===activeCat);
+  let list = PRODUCTS.filter(p=> activeCat==="All" || p.cat===activeCat);
+  const countEl = document.getElementById('productCount');
+  if(countEl) countEl.textContent = list.length + (list.length===1 ? ' product' : ' products');
+  const sortMode = document.getElementById('sortSelect') ? document.getElementById('sortSelect').value : 'featured';
+  list = sortList(list, sortMode);
   if(list.length===0){
     gridEl.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#8a7a68;padding:30px 0;">No items in this category yet.</p>`;
     return;
@@ -760,7 +910,10 @@ function renderGrid(){
       ? `<img src="${p.img}" alt="${p.name}">`
       : p.icon;
     card.innerHTML = `
-      <div class="card-img" onclick="openProductModal(${p.id})" style="background:${p.img ? '#eee' : p.color}${soldOut ? ';filter:grayscale(1);opacity:.6;' : ''}">${imgHtml}</div>
+      <div class="card-img" onclick="openProductModal(${p.id})" style="background:${p.img ? '#eee' : p.color}">
+        ${soldOut ? `<span class="sold-out-badge">Sold Out</span>` : ''}
+        ${imgHtml}
+      </div>
       <div class="card-body">
         <div class="card-cat">${p.cat}</div>
         <div class="card-name">${p.name}</div>
@@ -768,7 +921,7 @@ function renderGrid(){
         <div class="card-price">₹${p.price}</div>
         <div class="qty-row" id="qtyrow-${p.id}">
           ${soldOut
-            ? `<div style="text-align:center;font-size:12px;font-weight:700;color:#b23a3a;">Sold Out</div>`
+            ? `<div style="text-align:center;font-size:12px;font-weight:700;color:#b23a3a;">Currently Unavailable</div>`
             : qty===0
               ? `<button class="add-btn" onclick="addItem(${p.id})">Add to Cart</button>`
               : `<div class="stepper">
@@ -782,6 +935,7 @@ function renderGrid(){
     gridEl.appendChild(card);
   });
 }
+applyTheme('All');
 loadSettings();
 loadProducts();
 
