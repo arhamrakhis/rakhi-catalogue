@@ -306,6 +306,16 @@
   .card-img img{
     width:100%; height:100%; object-fit:contain; display:block;
   }
+  /* Real photos get their natural aspect ratio — full image, no crop,
+     no leftover background bars. Icon placeholders (no photo yet) keep
+     the fixed decorative box above. */
+  .card-img.has-photo{
+    height:auto;
+    display:block;
+  }
+  .card-img.has-photo img{
+    width:100%; height:auto; object-fit:initial;
+  }
   /* Products with a real photo (p.img set) render an <img> here automatically.
      Products without one fall back to the color+icon placeholder. */
   .card-body{
@@ -576,8 +586,8 @@
       <h3 id="modalProdName" style="font-size:18px;"></h3>
       <button class="close-x" onclick="closeSheet('productOverlay')">✕</button>
     </div>
-    <div id="modalProdImgWrap" style="border-radius:12px;overflow:hidden;background:#eee;margin-bottom:12px;display:flex;align-items:center;justify-content:center;min-height:220px;">
-      <img id="modalProdImg" style="width:100%;max-height:360px;object-fit:contain;display:none;">
+    <div id="modalProdImgWrap" style="border-radius:12px;overflow:hidden;margin-bottom:12px;">
+      <img id="modalProdImg" style="width:100%;height:auto;display:none;">
       <div id="modalProdIcon" style="font-size:70px;color:#fff;width:100%;min-height:220px;display:flex;align-items:center;justify-content:center;"></div>
     </div>
     <div class="card-cat" id="modalProdCat" style="margin-bottom:4px;"></div>
@@ -1142,7 +1152,7 @@ function renderGrid(){
       ? `<img src="${p.img}" alt="${p.name}">`
       : p.icon;
     card.innerHTML = `
-      <div class="card-img" onclick="openProductModal(${p.id})" style="background:${p.img ? '#eee' : p.color}">
+      <div class="card-img${p.img ? ' has-photo' : ''}" onclick="openProductModal(${p.id})" style="background:${p.img ? 'transparent' : p.color}">
         ${soldOut ? `<div class="sold-out-overlay"><span>Sold Out</span></div>` : ''}
         ${imgHtml}
       </div>
