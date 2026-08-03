@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ARHAM Rakhis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Baloo+2:wght@500;700&family=Playfair+Display:wght@500;700&family=Cormorant+Garamond:wght@600;700&family=Poppins:wght@400;500;600;700&family=Poppins:ital@1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Yeseva+One&family=Baloo+2:wght@500;700&family=Playfair+Display:wght@500;700&family=Cormorant+Garamond:wght@600;700&family=Poppins:wght@400;500;600;700&family=Poppins:ital@1&display=swap" rel="stylesheet">
 <style>
   /* =========================================================
      EDIT ZONE 1 — your brand basics live here as CSS variables
@@ -26,6 +26,10 @@
     --card-text:#3A2418;
     --input-border:#e6d6bd;
     --heading-font:'Rozha One', serif;
+    --hero-font:'Yeseva One', serif;
+    --hero-1:#FF8A3D;
+    --hero-2:#FF3D77;
+    --hero-3:#FFC93C;
     --shadow: 0 8px 24px rgba(122,31,43,0.15);
   }
 
@@ -59,7 +63,7 @@
 
   /* ---------- Header ---------- */
   .hero{
-    background: linear-gradient(135deg,var(--maroon) 0%, var(--maroon-dark) 60%, var(--magenta) 130%);
+    background: linear-gradient(135deg,var(--hero-1) 0%, var(--hero-2) 55%, var(--hero-3) 130%);
     color:#fff;
     padding:36px 20px 34px;
     text-align:center;
@@ -70,14 +74,14 @@
   .hero::after{
     content:"";
     position:absolute; left:0; right:0; bottom:0; height:14px;
-    background-image: repeating-linear-gradient(45deg, var(--gold) 0 6px, transparent 6px 12px);
-    opacity:0.6;
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.55) 0 6px, transparent 6px 12px);
+    opacity:0.7;
   }
   .hero-pattern{
     position:absolute; inset:0;
-    background-image: radial-gradient(rgba(255,255,255,0.10) 2px, transparent 2px);
+    background-image: radial-gradient(rgba(255,255,255,0.16) 2px, transparent 2px);
     background-size: 26px 26px;
-    opacity:.5;
+    opacity:.6;
     pointer-events:none;
   }
   .hero-inner{ position:relative; z-index:1; }
@@ -85,22 +89,27 @@
     letter-spacing:3px;
     font-size:11px;
     text-transform:uppercase;
-    color:var(--gold);
+    color:#fff;
+    opacity:.9;
     margin-bottom:6px;
   }
   .hero h1{
-    font-size:36px;
+    font-family:var(--hero-font);
+    font-size:38px;
     line-height:1.15;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    transition: font-family .3s ease;
   }
   .hero p{
     margin-top:8px;
     font-size:13.5px;
-    color:#f3d9c7;
+    color:#fff;
+    opacity:.92;
   }
   .hero-cta{
     margin-top:16px;
     background:#fff;
-    color:var(--maroon);
+    color:var(--hero-2);
     border:none;
     padding:11px 24px;
     border-radius:999px;
@@ -132,13 +141,20 @@
   }
   .trust-item span{ opacity:.85; }
 
-  /* thread divider — signature motif */
+  /* thread divider — signature motif, now animated to flow */
   .thread-divider{
     display:flex;
     justify-content:center;
     margin:10px 0 4px;
   }
-  .thread-divider svg{ width:120px; height:16px; }
+  .thread-divider svg{ width:140px; height:16px; overflow:visible; }
+  .thread-divider path{
+    stroke-dasharray: 10 8;
+    animation: threadFlow 1.8s linear infinite;
+  }
+  @keyframes threadFlow{
+    to{ stroke-dashoffset:-36; }
+  }
 
   /* ---------- Category chips ---------- */
   .cats{
@@ -467,7 +483,7 @@
     <h1>ARHAM Rakhis</h1>
     <p style="font-style:italic;margin-top:2px;">Threads of Love</p>
     <div class="thread-divider">
-      <svg viewBox="0 0 120 16"><path d="M0 8 Q15 0 30 8 T60 8 T90 8 T120 8" stroke="#C9A227" stroke-width="2" fill="none"/></svg>
+      <svg viewBox="0 0 120 16"><path d="M0 8 Q15 0 30 8 T60 8 T90 8 T120 8" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.85"/></svg>
     </div>
     <button class="hero-cta" onclick="document.getElementById('cats').scrollIntoView({behavior:'smooth'})">Shop the Collection ↓</button>
   </div>
@@ -848,7 +864,12 @@ async function loadProducts(){
   } else {
     PRODUCTS = SAMPLE_PRODUCTS;
   }
-  CATS = ["All", ...new Set(PRODUCTS.map(p=>p.cat))];
+  const PREFERRED_ORDER = ["Singles","Jodis","Premium","Kids","Ladies","Maulis"];
+  const foundCats = [...new Set(PRODUCTS.map(p=>p.cat))];
+  const known = PREFERRED_ORDER.filter(o => foundCats.some(c => c.toLowerCase() === o.toLowerCase()))
+                               .map(o => foundCats.find(c => c.toLowerCase() === o.toLowerCase()));
+  const unknown = foundCats.filter(c => !known.includes(c));
+  CATS = ["All", ...known, ...unknown];
   renderCatChips();
   renderGrid();
 }
@@ -865,6 +886,7 @@ const THEMES = {
     magenta:"#B23A63", cream:"#FFF8ED", thread:"#F1DFC2", ink:"#3A2418",
     cardBg:"#FFFFFF", cardText:"#3A2418", inputBorder:"#e6d6bd",
     headingFont:"'Rozha One', serif",
+    hero1:"#FF8A3D", hero2:"#FF3D77", hero3:"#FFC93C", heroFont:"'Yeseva One', serif",
   },
   kids: {
     // Playful & colourful — bright candy tones, rounded bubbly heading font
@@ -872,6 +894,7 @@ const THEMES = {
     magenta:"#FF8AC6", cream:"#FFF8E9", thread:"#FFE3B0", ink:"#4A2E1A",
     cardBg:"#FFFFFF", cardText:"#4A2E1A", inputBorder:"#FFD9A0",
     headingFont:"'Baloo 2', cursive",
+    hero1:"#FF5A8A", hero2:"#FFC93C", hero3:"#3DB4E8", heroFont:"'Baloo 2', cursive",
   },
   jodis: {
     // Romantic pair energy — warm rose & gold
@@ -879,6 +902,7 @@ const THEMES = {
     magenta:"#D46A8C", cream:"#FFF3F2", thread:"#F7D9DE", ink:"#4A2438",
     cardBg:"#FFFFFF", cardText:"#4A2438", inputBorder:"#F0C6D2",
     headingFont:"'Rozha One', serif",
+    hero1:"#FF6F91", hero2:"#FFB347", hero3:"#B23A63", heroFont:"'Yeseva One', serif",
   },
   ladies: {
     // Elegant floral pastel — plum & blush
@@ -886,13 +910,15 @@ const THEMES = {
     magenta:"#C777A5", cream:"#FFF6F9", thread:"#F6DDE9", ink:"#3F2436",
     cardBg:"#FFFFFF", cardText:"#3F2436", inputBorder:"#F2D3E2",
     headingFont:"'Cormorant Garamond', serif",
+    hero1:"#FF8FC0", hero2:"#C77DFF", hero3:"#FFC93C", heroFont:"'Cormorant Garamond', serif",
   },
   premium: {
-    // Rich & exquisite — deep charcoal, gold shimmer
+    // Rich & exquisite — deep charcoal, gold shimmer (intentionally moody, not neon-bright)
     maroon:"#C9A227", maroonDark:"#8a6f1a", marigold:"#E0C46C", gold:"#F0DDA0",
     magenta:"#C9A227", cream:"#17130F", thread:"#2A231C", ink:"#F1E4C8",
     cardBg:"#211B15", cardText:"#F1E4C8", inputBorder:"#4A3D28",
     headingFont:"'Playfair Display', serif",
+    hero1:"#3D3220", hero2:"#8A6F1A", hero3:"#E0C46C", heroFont:"'Playfair Display', serif",
   },
   maulis: {
     // Traditional & sacred — deep red thread, mustard, minimal
@@ -900,6 +926,7 @@ const THEMES = {
     magenta:"#9B1B30", cream:"#FBF3E7", thread:"#EEDDBB", ink:"#3A2418",
     cardBg:"#FFFFFF", cardText:"#3A2418", inputBorder:"#E8D8B8",
     headingFont:"'Rozha One', serif",
+    hero1:"#FF7A00", hero2:"#E63950", hero3:"#FFD166", heroFont:"'Yeseva One', serif",
   },
   singles: {
     // Classic festive — same as default, kept as its own key for clarity
@@ -907,6 +934,7 @@ const THEMES = {
     magenta:"#B23A63", cream:"#FFF8ED", thread:"#F1DFC2", ink:"#3A2418",
     cardBg:"#FFFFFF", cardText:"#3A2418", inputBorder:"#e6d6bd",
     headingFont:"'Rozha One', serif",
+    hero1:"#FF8A3D", hero2:"#FF3D77", hero3:"#FFC93C", heroFont:"'Yeseva One', serif",
   },
 };
 
@@ -931,6 +959,10 @@ function applyTheme(cat){
   root.setProperty('--card-text', t.cardText);
   root.setProperty('--input-border', t.inputBorder);
   root.setProperty('--heading-font', t.headingFont);
+  root.setProperty('--hero-1', t.hero1);
+  root.setProperty('--hero-2', t.hero2);
+  root.setProperty('--hero-3', t.hero3);
+  root.setProperty('--hero-font', t.heroFont);
 }
 
 /* ================= RENDER CATEGORY CHIPS ================= */
