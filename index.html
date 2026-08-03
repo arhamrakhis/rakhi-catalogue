@@ -120,6 +120,30 @@
     transition: transform .15s ease, color .4s ease;
   }
   .hero-cta:active{ transform:scale(0.96); }
+  .track-order-btn{
+    position:absolute;
+    top:16px; right:16px;
+    z-index:3;
+    background:rgba(255,255,255,0.95);
+    color:var(--hero-2);
+    border:none;
+    padding:11px 18px;
+    border-radius:999px;
+    font-weight:800;
+    font-size:13.5px;
+    letter-spacing:.2px;
+    cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,0.22);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    transition: transform .15s ease, color .4s ease, box-shadow .2s ease;
+  }
+  .track-order-btn:hover{ box-shadow:0 8px 22px rgba(0,0,0,0.3); }
+  .track-order-btn:active{ transform:scale(0.95); }
+  @media (max-width:380px){
+    .track-order-btn{ font-size:12px; padding:9px 14px; top:12px; right:12px; }
+  }
 
   /* ---------- Trust badges row ---------- */
   .trust-row{
@@ -184,6 +208,25 @@
   }
 
   /* ---------- Product grid ---------- */
+  .contact-section{
+    padding:30px 20px 10px;
+    transition: background .4s ease;
+  }
+  .contact-card{
+    max-width:360px;
+    margin:0 auto;
+    background:var(--card-bg);
+    color:var(--card-text);
+    border-radius:14px;
+    padding:20px;
+    text-align:center;
+    box-shadow:var(--shadow);
+    transition: background .4s ease, color .4s ease;
+  }
+  .contact-card p{ margin:6px 0; font-size:13.5px; line-height:1.5; }
+  .contact-card a{ color:var(--maroon); text-decoration:none; font-weight:600; }
+  .contact-card a:hover{ text-decoration:underline; }
+
   .grid-toolbar{
     display:flex;
     justify-content:space-between;
@@ -203,18 +246,26 @@
     cursor:pointer;
     transition: background .4s ease, color .4s ease, border-color .4s ease;
   }
-  .sold-out-badge{
-    position:absolute;
-    top:8px; left:8px;
-    background:rgba(20,15,10,0.82);
-    color:#fff;
-    font-size:10px;
-    font-weight:700;
-    letter-spacing:.5px;
-    text-transform:uppercase;
-    padding:4px 9px;
-    border-radius:999px;
+  .sold-out-overlay{
+    position:absolute; inset:0;
+    background:rgba(15,10,8,0.5);
+    display:flex;
+    align-items:center;
+    justify-content:center;
     z-index:2;
+    pointer-events:none;
+  }
+  .sold-out-overlay span{
+    border:2.5px solid #fff;
+    color:#fff;
+    font-weight:800;
+    font-size:14px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    padding:5px 16px;
+    transform:rotate(-10deg);
+    background:rgba(178,58,58,0.55);
+    white-space:nowrap;
   }
   .grid{
     display:grid;
@@ -477,6 +528,7 @@
 <div class="announce-bar" id="announceBar">🎉 Handcrafted Rakhis, delivered with love · Order directly on WhatsApp</div>
 
 <div class="hero">
+  <button class="track-order-btn" onclick="showSheet('trackOverlay')">📦 Track Order</button>
   <div class="hero-pattern"></div>
   <div class="hero-inner">
     <div class="eyebrow">Raksha Bandhan Collection</div>
@@ -506,6 +558,16 @@
   </select>
 </div>
 <div class="grid" id="grid"></div>
+
+<div class="contact-section">
+  <h3 style="text-align:center;margin-bottom:14px;">Contact Us</h3>
+  <div class="contact-card">
+    <p><b>Pooja V Shah</b></p>
+    <p><a href="tel:+919043048318">📞 +91 90430 48318</a></p>
+    <p>📍 Arham Fashions<br>40/9 Kalathiappa Street<br>Choolai, Chennai 600007</p>
+    <p><a href="https://www.instagram.com/arham.fashions?igsh=MXNmOHF4YzNmMzNyaQ==" target="_blank" rel="noopener">📷 @arham.fashions</a></p>
+  </div>
+</div>
 
 <!-- PRODUCT DETAIL / FULL IMAGE VIEW -->
 <div class="overlay" id="productOverlay">
@@ -581,10 +643,6 @@
       <input type="text" id="custState" placeholder="State">
       <div class="error-text" id="errState">Please enter your state</div>
     </div>
-    <div class="field">
-      <label>Note (optional)</label>
-      <input type="text" id="custNote" placeholder="e.g. gift wrap, delivery date preference">
-    </div>
     <button class="primary-btn" onclick="goToPayment()">Continue to Payment</button>
   </div>
 </div>
@@ -634,7 +692,7 @@
         Step 2 — this button opens WhatsApp with your order pre-filled. Don't forget Step 3: share your payment screenshot/receipt in that same WhatsApp chat, or your order won't be processed.
       </div>
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
-        📦 Delivery takes 3–4 business days.<br>Need it urgently? <a href="#" id="callLinkPayment" style="color:var(--success);font-weight:700;">Call us directly</a>.
+        📦 Delivery within 4–5 days.<br>Need it urgently? Call us immediately after placing your order — <a href="#" id="callLinkPayment" style="color:var(--success);font-weight:700;">tap here</a>.
       </div>
     </div>
   </div>
@@ -652,10 +710,26 @@
       <p style="font-size:12px;color:#8a7a68;">If WhatsApp didn't open automatically, tap below.</p>
       <a class="secondary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Send Order to WhatsApp</a>
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
-        📦 Delivery takes 3–4 business days.<br>Need it urgently? <a href="#" id="callLinkConfirm" style="color:var(--success);font-weight:700;">Call us directly</a>.
+        📦 Delivery within 4–5 days.<br>Need it urgently? Call us immediately after placing your order — <a href="#" id="callLinkConfirm" style="color:var(--success);font-weight:700;">tap here</a>.
       </div>
       <button class="primary-btn" onclick="closeSheet('confirmOverlay'); resetCart();">Done</button>
     </div>
+  </div>
+</div>
+
+<!-- TRACK ORDER -->
+<div class="overlay" id="trackOverlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3>Track Your Order</h3>
+      <button class="close-x" onclick="closeSheet('trackOverlay')">✕</button>
+    </div>
+    <div class="field">
+      <label>Order Number</label>
+      <input type="text" id="trackOrderId" placeholder="e.g. RKH-4821">
+    </div>
+    <button class="primary-btn" onclick="checkOrderStatus()">Check Status</button>
+    <div id="trackResult" style="margin-top:16px;font-size:13.5px;line-height:1.6;"></div>
   </div>
 </div>
 
@@ -678,27 +752,28 @@ const CONFIG = {
   imageFolder: "",
 
   // <-- OPTIONAL: a second published sheet (tab) with two columns: Key | Value
-  // Rows expected: "localCity" | Chennai   and   "shippingFee" | 60
-  // Leave blank to skip shipping charges entirely.
+  // Rows expected: "localCity" | Chennai, "withinCityFee" | 50, "outsideCityFee" | 70
+  // Leave blank to use the defaults set below (₹50 / ₹70).
   settingsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRYymLl_OynZr3BCicYkGCNJWuVdDFUi1dHU0jgubZOay829zIS-i3YaraAyFtlsLrrQcklG9__cSct/pub?gid=792185534&single=true&output=csv",
 
   // <-- OPTIONAL: your Google Apps Script "Web app" URL for logging orders
   // to a private Google Sheet only you can see. See setup notes below.
   // Leave blank to skip order logging (WhatsApp will still work).
-  ordersWebhookUrl: "",
+  ordersWebhookUrl: "https://script.google.com/macros/s/AKfycbwXIBz17ndvoiCESgkR74TprZd_Y_VaLGv_zl8SfJMjUp5rE06nSZqIWVgWXYTfF9Tc2Q/exec",
 };
 
 /* =========================================================
-   HOW SHIPPING WORKS
+   HOW DELIVERY CHARGES WORK
    Make a second tab in your Google Sheet (e.g. "Settings") with:
-     Key           | Value
-     localCity     | Chennai
-     shippingFee   | 60
+     Key             | Value
+     localCity       | Chennai
+     withinCityFee   | 50
+     outsideCityFee  | 70
    Publish just that tab to web as CSV (File → Share → Publish to web
    → choose the "Settings" sheet → CSV), and paste the link into
-   CONFIG.settingsCsvUrl. Whenever a customer's City doesn't match
-   "localCity", the shippingFee is automatically added to their total.
-   Change the fee anytime in the sheet — no code changes needed.
+   CONFIG.settingsCsvUrl. A delivery charge always applies — ₹50 if the
+   customer's City matches "localCity", otherwise ₹70. Change either
+   fee anytime in the sheet — no code changes needed.
    ========================================================= */
 
 /* =========================================================
@@ -706,13 +781,20 @@ const CONFIG = {
    This gives you a running record of every order — customer details,
    payment reference, and exactly what/how much was sold — so you can
    track sales, inventory, and revenue anytime, even if a WhatsApp
-   message is ever missed.
+   message is ever missed. It also powers the customer-facing
+   "Track Your Order" lookup on the site (see below).
 
    1. Make one new Google Sheet with TWO tabs (rename Sheet1, add a second):
       Tab "Orders" — headers in row 1:
-        Timestamp | Order ID | Txn Ref | Subtotal | Shipping | Total | Name | Phone | Address | City | State | Pincode | Note
+        Timestamp | Order ID | Txn Ref | Subtotal | Delivery Charge | Total | Name | Phone | Address | City | State | Pincode | Note | Status
+      (Note: the "Note" field was removed from checkout, so this column will
+      just stay blank going forward — no need to change the script or headers.)
       Tab "OrderItems" — headers in row 1:
         Timestamp | Order ID | Product | Category | Qty | Price | Line Total
+
+      The "Status" column (last one in Orders) is what customers see when
+      they track their order. Set it manually for each row — e.g. Processing,
+      Dispatched, Delivered. Leave blank and it just shows "Processing".
 
    2. In that spreadsheet: Extensions → Apps Script
    3. Delete any starter code and paste:
@@ -725,9 +807,9 @@ const CONFIG = {
         var now = new Date();
 
         orders.appendRow([
-          now, data.orderId, data.txnRef, data.subtotal, data.shipping,
+          now, data.orderId, data.txnRef, data.subtotal, data.deliveryCharge,
           data.total, data.name, data.phone, data.address, data.city,
-          data.state, data.pincode, data.note
+          data.state, data.pincode, data.note, "Processing"
         ]);
 
         (data.lineItems || []).forEach(function(li){
@@ -737,13 +819,47 @@ const CONFIG = {
         return ContentService.createTextOutput("OK");
       }
 
+      function doGet(e) {
+        var ss = SpreadsheetApp.getActiveSpreadsheet();
+        var orders = ss.getSheetByName("Orders");
+        var data = orders.getDataRange().getValues();
+        var headers = data[0];
+        var orderIdCol = headers.indexOf("Order ID");
+        var statusCol = headers.indexOf("Status");
+        var requestedId = (e.parameter.orderId || "").trim().toLowerCase();
+        var result = { found: false };
+
+        for (var i = 1; i < data.length; i++) {
+          if (String(data[i][orderIdCol]).trim().toLowerCase() === requestedId) {
+            result = {
+              found: true,
+              orderId: data[i][orderIdCol],
+              status: statusCol > -1 ? (data[i][statusCol] || "Processing") : "Processing"
+            };
+            break;
+          }
+        }
+        return ContentService.createTextOutput(JSON.stringify(result))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // doGet only ever returns the ONE matching order's status — never
+      // the full list — so it's safe to leave this deployment public.
+
    4. Click Deploy → New deployment → gear icon → Web app
       Execute as: Me   |   Who has access: Anyone
       Click Deploy, authorize when asked, then copy the Web app URL
    5. Paste that URL into CONFIG.ordersWebhookUrl above
 
    This sheet is NOT published to the web, so only you (signed into
-   your Google account) can ever see it — customer data stays private.
+   your Google account) can ever see the full data — the tracking
+   lookup only ever reveals one order's status to someone who already
+   knows that order's exact ID.
+
+   IMPORTANT: if you already deployed this Apps Script before adding
+   doGet, you must redeploy for the tracking feature to work: Deploy →
+   Manage deployments → pencil icon → Version: "New version" → Deploy.
+   The URL stays the same, so no code change needed here.
 
    FOR INSIGHTS: once orders start flowing in, select the OrderItems tab
    → Insert → Pivot table → group rows by Product (or Category), and
@@ -781,13 +897,22 @@ const PLACEHOLDER_COLORS = ["#C9A227","#B23A63","#7A1F2B","#8E3B46","#5A1521","#
 
 /* ================= APP STATE ================= */
 let activeCat = "All";
+const CART_STORAGE_KEY = 'arhamRakhisCart';
 let cart = {};
+try{
+  const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+  if(savedCart) cart = JSON.parse(savedCart);
+}catch(e){ console.error('Could not load saved cart:', e); }
+function saveCart(){
+  try{ localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart)); }
+  catch(e){ console.error('Could not save cart:', e); }
+}
 let PRODUCTS = [];
 let CATS = ["All"];
-let SETTINGS = { localCity: "Chennai", shippingFee: 0 };
+let SETTINGS = { localCity: "Chennai", withinCityFee: 50, outsideCityFee: 70 };
 let currentOrder = null;
 
-/* ================= LOAD SHIPPING SETTINGS ================= */
+/* ================= LOAD DELIVERY CHARGE SETTINGS ================= */
 async function loadSettings(){
   if(!CONFIG.settingsCsvUrl || CONFIG.settingsCsvUrl.trim()==='') return;
   try{
@@ -798,13 +923,16 @@ async function loadSettings(){
       const key = (parts[0]||'').trim().toLowerCase();
       const val = (parts[1]||'').trim().replace(/^"|"$/g,'');
       if(key === 'localcity' && val) SETTINGS.localCity = val;
-      if(key === 'shippingfee' && val) SETTINGS.shippingFee = Number(val) || 0;
+      if(key === 'withincityfee' && val) SETTINGS.withinCityFee = Number(val) || 0;
+      if(key === 'outsidecityfee' && val) SETTINGS.outsideCityFee = Number(val) || 0;
     });
-  }catch(e){ console.error('Could not load shipping settings, using defaults:', e); }
+  }catch(e){ console.error('Could not load delivery charge settings, using defaults:', e); }
 }
-function computeShipping(city){
-  if(!city) return 0;
-  return city.trim().toLowerCase() === SETTINGS.localCity.trim().toLowerCase() ? 0 : SETTINGS.shippingFee;
+function computeDeliveryCharge(city){
+  if(!city) return SETTINGS.withinCityFee;
+  return city.trim().toLowerCase() === SETTINGS.localCity.trim().toLowerCase()
+    ? SETTINGS.withinCityFee
+    : SETTINGS.outsideCityFee;
 }
 
 /* ================= CSV PARSER (handles quoted commas) ================= */
@@ -866,8 +994,13 @@ async function loadProducts(){
   }
   const PREFERRED_ORDER = ["Singles","Jodis","Premium","Kids","Ladies","Maulis"];
   const foundCats = [...new Set(PRODUCTS.map(p=>p.cat))];
-  const known = PREFERRED_ORDER.filter(o => foundCats.some(c => c.toLowerCase() === o.toLowerCase()))
-                               .map(o => foundCats.find(c => c.toLowerCase() === o.toLowerCase()));
+  // Fuzzy match: strips a trailing "s" from the preferred word (e.g. "Singles" -> "single")
+  // so it matches variations like "Single Rakhis", "Singles", "Single", etc.
+  const matchCat = (order) => {
+    const stripped = order.toLowerCase().replace(/s$/,'');
+    return foundCats.find(c => c.toLowerCase().includes(stripped));
+  };
+  const known = PREFERRED_ORDER.map(matchCat).filter(Boolean);
   const unknown = foundCats.filter(c => !known.includes(c));
   CATS = ["All", ...known, ...unknown];
   renderCatChips();
@@ -940,7 +1073,8 @@ const THEMES = {
 
 function themeForCategory(cat){
   if(!cat || cat.toLowerCase()==='all') return THEMES.default;
-  const key = Object.keys(THEMES).find(k => cat.toLowerCase().includes(k));
+  const catLower = cat.toLowerCase();
+  const key = Object.keys(THEMES).find(k => catLower.includes(k.replace(/s$/,'')));
   return key ? THEMES[key] : THEMES.default;
 }
 
@@ -1009,7 +1143,7 @@ function renderGrid(){
       : p.icon;
     card.innerHTML = `
       <div class="card-img" onclick="openProductModal(${p.id})" style="background:${p.img ? '#eee' : p.color}">
-        ${soldOut ? `<span class="sold-out-badge">Sold Out</span>` : ''}
+        ${soldOut ? `<div class="sold-out-overlay"><span>Sold Out</span></div>` : ''}
         ${imgHtml}
       </div>
       <div class="card-body">
@@ -1036,11 +1170,13 @@ function renderGrid(){
 applyTheme('All');
 loadSettings();
 loadProducts();
+updateFab();
 
-function addItem(id){ cart[id] = 1; renderGrid(); updateFab(); renderModalQty(); }
+function addItem(id){ cart[id] = 1; saveCart(); renderGrid(); updateFab(); renderModalQty(); }
 function changeQty(id, delta){
   cart[id] = (cart[id]||0) + delta;
   if(cart[id]<=0) delete cart[id];
+  saveCart();
   renderGrid(); updateFab(); renderCartSheet(); renderModalQty();
 }
 
@@ -1144,7 +1280,7 @@ function renderCartSheet(){
   totalsEl.innerHTML = `
     <div class="totals-row"><span>Items</span><span>${cartCount()}</span></div>
     <div class="totals-row grand"><span>Total</span><span>₹${cartTotal()}</span></div>
-    <p style="font-size:11px;color:#a08a70;margin-top:6px;">Shipping (if applicable outside ${SETTINGS.localCity}) is added at checkout based on delivery city.</p>
+    <p style="font-size:11px;color:#a08a70;margin-top:6px;">Delivery charge is added at checkout: ₹${SETTINGS.withinCityFee} within ${SETTINGS.localCity}, ₹${SETTINGS.outsideCityFee} outside.</p>
   `;
 }
 
@@ -1221,13 +1357,14 @@ function goToPayment(){
   closeSheet('detailsOverlay');
   const city = document.getElementById('custCity').value.trim();
   const subtotal = cartTotal();
-  const shipping = computeShipping(city);
-  const grandTotal = subtotal + shipping;
+  const deliveryCharge = computeDeliveryCharge(city);
+  const isLocal = city.trim().toLowerCase() === SETTINGS.localCity.trim().toLowerCase();
+  const grandTotal = subtotal + deliveryCharge;
 
   const breakdownEl = document.getElementById('payBreakdown');
   breakdownEl.innerHTML = `
     <div class="totals-row"><span>Subtotal</span><span>₹${subtotal}</span></div>
-    ${shipping > 0 ? `<div class="totals-row"><span>Shipping (outside ${SETTINGS.localCity})</span><span>₹${shipping}</span></div>` : ''}
+    <div class="totals-row"><span>Delivery Charges (${isLocal ? 'within' : 'outside'} ${SETTINGS.localCity})</span><span>₹${deliveryCharge}</span></div>
   `;
   document.getElementById('payAmount').textContent = '₹'+grandTotal;
   document.getElementById('txnRef').value = '';
@@ -1263,7 +1400,6 @@ function prepareOrder(){
   const pincode = document.getElementById('custPincode').value.trim();
   const city = document.getElementById('custCity').value.trim();
   const state = document.getElementById('custState').value.trim();
-  const note = document.getElementById('custNote').value.trim();
   const txnRef = window.pendingTxnRef || '';
   const orderId = generateOrderId();
 
@@ -1275,15 +1411,17 @@ function prepareOrder(){
   const itemsPlain = lineItems.map(li=> `${li.name} x${li.qty}`).join(', ');
 
   const subtotal = cartTotal();
-  const shipping = computeShipping(city);
-  const total = subtotal + shipping;
+  const deliveryCharge = computeDeliveryCharge(city);
+  const isLocal = city.trim().toLowerCase() === SETTINGS.localCity.trim().toLowerCase();
+  const total = subtotal + deliveryCharge;
 
   const message =
 `New Rakhi Order (${orderId})
 
 ${itemLines}
 
-Subtotal: ₹${subtotal}${shipping > 0 ? `\nShipping: ₹${shipping}` : ''}
+Subtotal: ₹${subtotal}
+Delivery Charges (${isLocal ? 'within' : 'outside'} ${SETTINGS.localCity}): ₹${deliveryCharge}
 Total: ₹${total}
 
 Customer Details:
@@ -1293,14 +1431,13 @@ Address: ${address}
 City: ${city}
 State: ${state}
 Pincode: ${pincode}${pincodeVerified ? ' (verified)' : ''}
-${note ? 'Note: '+note : ''}
 
 Payment: UPI — Transaction Ref: ${txnRef} (please verify before shipping)
-Delivery: 3–4 business days (urgent orders — call directly)`;
+Delivery: 4–5 days. For urgent delivery, please call us immediately after placing your order.`;
 
   const waLink = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
 
-  currentOrder = { orderId, name, phone, address, city, state, pincode, note, txnRef, subtotal, shipping, total, itemsPlain, lineItems, waLink };
+  currentOrder = { orderId, name, phone, address, city, state, pincode, txnRef, subtotal, deliveryCharge, total, itemsPlain, lineItems, waLink };
   logOrderToSheet(currentOrder);
   return currentOrder;
 }
@@ -1320,6 +1457,37 @@ function logOrderToSheet(order){
   }).catch(e=> console.error('Order logging failed (order still sent via WhatsApp):', e));
 }
 
+/* ================= TRACK ORDER (customer-facing, privacy-safe) =================
+   Looks up a single order by its exact Order ID via the same Apps Script
+   deployment used for logging (doGet, separate from doPost). Only returns
+   that one order's status — never a list of all orders — so this stays
+   safe to expose publicly even though the underlying sheet is private. */
+async function checkOrderStatus(){
+  const orderId = document.getElementById('trackOrderId').value.trim();
+  const resultEl = document.getElementById('trackResult');
+  if(!orderId){ resultEl.textContent = 'Please enter your order number.'; return; }
+  if(!CONFIG.ordersWebhookUrl || CONFIG.ordersWebhookUrl.trim()===''){
+    resultEl.textContent = "Order tracking isn't set up yet — please message us on WhatsApp with your order number.";
+    return;
+  }
+  resultEl.textContent = 'Checking…';
+  try{
+    const res = await fetch(`${CONFIG.ordersWebhookUrl}?orderId=${encodeURIComponent(orderId)}`);
+    const data = await res.json();
+    if(data.found){
+      resultEl.innerHTML = `
+        <div style="background:var(--thread);border-radius:10px;padding:12px;">
+          <b>Order ${data.orderId}</b><br>
+          Status: <b>${data.status || 'Processing'}</b>
+        </div>`;
+    } else {
+      resultEl.textContent = "No order found with that number. Please double-check it, or message us on WhatsApp.";
+    }
+  } catch(e){
+    resultEl.textContent = "Couldn't check status right now — please try again shortly, or message us on WhatsApp.";
+  }
+}
+
 /* ================= SHOW CONFIRMATION + SEND WHATSAPP =================
    This runs directly from the "Confirm & Send Order" tap — a genuine user
    gesture — so opening WhatsApp here is reliable across browsers, unlike
@@ -1329,7 +1497,7 @@ function showConfirmation(){
   document.getElementById('orderId').textContent = order.orderId;
   document.getElementById('confirmSummary').innerHTML = `
     <b>${order.itemsPlain}</b><br>
-    Subtotal: ₹${order.subtotal}${order.shipping > 0 ? `<br>Shipping: ₹${order.shipping}` : ''}<br>
+    Subtotal: ₹${order.subtotal}<br>Delivery Charges: ₹${order.deliveryCharge}<br>
     <b>Total: ₹${order.total}</b><br>
     Transaction Ref: ${order.txnRef}<br><br>
     Delivering to: ${order.address}, ${order.city}, ${order.state} - ${order.pincode}
@@ -1342,6 +1510,7 @@ function showConfirmation(){
 
 function resetCart(){
   cart = {};
+  saveCart();
   currentOrder = null;
   window.pendingTxnRef = '';
   document.getElementById('custName').value='';
@@ -1350,7 +1519,6 @@ function resetCart(){
   document.getElementById('custPincode').value='';
   document.getElementById('custCity').value='';
   document.getElementById('custState').value='';
-  document.getElementById('custNote').value='';
   statusEl.textContent = '';
   pincodeVerified = false;
   renderGrid(); updateFab();
