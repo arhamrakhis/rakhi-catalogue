@@ -120,17 +120,28 @@
     transition: transform .15s ease, color .4s ease;
   }
   .hero-cta:active{ transform:scale(0.96); }
+
+  .hero-topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+  }
+  .hero-brand-mark{
+    font-weight:800;
+    font-size:13px;
+    letter-spacing:1.5px;
+    color:#fff;
+    opacity:.95;
+  }
   .track-order-btn{
-    position:absolute;
-    top:16px; right:16px;
-    z-index:3;
     background:rgba(255,255,255,0.95);
     color:var(--hero-2);
     border:none;
-    padding:11px 18px;
+    padding:9px 16px;
     border-radius:999px;
     font-weight:800;
-    font-size:13.5px;
+    font-size:12.5px;
     letter-spacing:.2px;
     cursor:pointer;
     box-shadow:0 6px 18px rgba(0,0,0,0.22);
@@ -141,8 +152,9 @@
   }
   .track-order-btn:hover{ box-shadow:0 8px 22px rgba(0,0,0,0.3); }
   .track-order-btn:active{ transform:scale(0.95); }
-  @media (max-width:380px){
-    .track-order-btn{ font-size:12px; padding:9px 14px; top:12px; right:12px; }
+  @media (max-width:360px){
+    .hero-brand-mark{ font-size:11px; }
+    .track-order-btn{ font-size:11.5px; padding:8px 12px; }
   }
 
   /* ---------- Trust badges row ---------- */
@@ -538,9 +550,12 @@
 <div class="announce-bar" id="announceBar">🎉 Handcrafted Rakhis, delivered with love · Order directly on WhatsApp</div>
 
 <div class="hero">
-  <button class="track-order-btn" onclick="showSheet('trackOverlay')">📦 Track Order</button>
   <div class="hero-pattern"></div>
   <div class="hero-inner">
+    <div class="hero-topbar">
+      <span class="hero-brand-mark">🪢 ARHAM</span>
+      <button class="track-order-btn" onclick="showSheet('trackOverlay')">📦 Track Order</button>
+    </div>
     <div class="eyebrow">Raksha Bandhan Collection</div>
     <h1>ARHAM Rakhis</h1>
     <p style="font-style:italic;margin-top:2px;">Threads of Love</p>
@@ -553,7 +568,7 @@
 
 <div class="trust-row">
   <div class="trust-item">🧵<span>Handcrafted with Care</span></div>
-  <div class="trust-item">📦<span>3–4 Day Delivery</span></div>
+  <div class="trust-item">🚚<span>Pan-India Delivery</span></div>
   <div class="trust-item">💬<span>Order on WhatsApp</span></div>
 </div>
 
@@ -702,7 +717,7 @@
         Step 2 — this button opens WhatsApp with your order pre-filled. Don't forget Step 3: share your payment screenshot/receipt in that same WhatsApp chat, or your order won't be processed.
       </div>
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
-        📦 Delivery within 4–5 days.<br>Need it urgently? Call us immediately after placing your order — <a href="#" id="callLinkPayment" style="color:var(--success);font-weight:700;">tap here</a>.
+        📦 Delivery within 4–5 business days.<br>Need it urgently? Call us immediately after placing your order — <a href="#" id="callLinkPayment" style="color:var(--success);font-weight:700;">tap here</a>.
       </div>
     </div>
   </div>
@@ -720,7 +735,7 @@
       <p style="font-size:12px;color:#8a7a68;">If WhatsApp didn't open automatically, tap below.</p>
       <a class="secondary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Send Order to WhatsApp</a>
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
-        📦 Delivery within 4–5 days.<br>Need it urgently? Call us immediately after placing your order — <a href="#" id="callLinkConfirm" style="color:var(--success);font-weight:700;">tap here</a>.
+        📦 Delivery within 4–5 business days.<br>Need it urgently? Call us immediately after placing your order — <a href="#" id="callLinkConfirm" style="color:var(--success);font-weight:700;">tap here</a>.
       </div>
       <button class="primary-btn" onclick="closeSheet('confirmOverlay'); resetCart();">Done</button>
     </div>
@@ -1443,7 +1458,7 @@ State: ${state}
 Pincode: ${pincode}${pincodeVerified ? ' (verified)' : ''}
 
 Payment: UPI — Transaction Ref: ${txnRef} (please verify before shipping)
-Delivery: 4–5 days. For urgent delivery, please call us immediately after placing your order.`;
+Delivery: 4–5 business days. For urgent delivery, please call us immediately after placing your order.`;
 
   const waLink = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
 
