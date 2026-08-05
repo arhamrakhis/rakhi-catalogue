@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ARHAM Rakhis</title>
+
+<!-- Google Analytics (GA4) — tracks visits, city/country, device type,
+     referral source (WhatsApp/Instagram/direct), plus custom events
+     for Add to Cart and Order Confirmed further down this file. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9KFWGTCH6G"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9KFWGTCH6G');
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Yeseva+One&family=Baloo+2:wght@500;700&family=Playfair+Display:wght@500;700&family=Cormorant+Garamond:wght@600;700&family=Poppins:wght@400;500;600;700&family=Poppins:ital@1&display=swap" rel="stylesheet">
 <style>
@@ -1201,7 +1213,19 @@ loadSettings();
 loadProducts();
 updateFab();
 
-function addItem(id){ cart[id] = 1; saveCart(); renderGrid(); updateFab(); renderModalQty(); }
+function addItem(id){
+  cart[id] = 1;
+  saveCart();
+  renderGrid(); updateFab(); renderModalQty();
+  const p = PRODUCTS.find(x=>x.id==id);
+  if(typeof gtag === 'function' && p){
+    gtag('event', 'add_to_cart', {
+      currency: 'INR',
+      value: p.price,
+      items: [{ item_id: p.name, item_category: p.cat, price: p.price, quantity: 1 }]
+    });
+  }
+}
 function changeQty(id, delta){
   cart[id] = (cart[id]||0) + delta;
   if(cart[id]<=0) delete cart[id];
@@ -1535,6 +1559,18 @@ function showConfirmation(){
   closeSheet('paymentOverlay');
   showSheet('confirmOverlay');
   window.open(order.waLink, '_blank');
+
+  if(typeof gtag === 'function'){
+    gtag('event', 'purchase', {
+      transaction_id: order.orderId,
+      currency: 'INR',
+      value: order.total,
+      shipping: order.deliveryCharge,
+      items: order.lineItems.map(li => ({
+        item_id: li.name, item_category: li.cat, price: li.price, quantity: li.qty
+      }))
+    });
+  }
 }
 
 function resetCart(){
