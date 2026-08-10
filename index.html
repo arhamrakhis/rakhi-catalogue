@@ -1406,6 +1406,7 @@ async function lookupPincode(code){
 }
 
 function goToPayment(){
+  if(document.activeElement) document.activeElement.blur();
   if(!validateDetails()) return;
   closeSheet('detailsOverlay');
   const city = document.getElementById('custCity').value.trim();
@@ -1427,6 +1428,7 @@ function goToPayment(){
 }
 
 function confirmOrder(){
+  if(document.activeElement) document.activeElement.blur();
   const txnRef = document.getElementById('txnRef').value.trim();
   const errEl = document.getElementById('errTxnRef');
   // Optional field — only flag it if something was typed but looks too short to be real
