@@ -494,7 +494,7 @@
 
   .field{ margin-bottom:12px; }
   .field label{ font-size:12.5px; font-weight:600; display:block; margin-bottom:4px; }
-  .field input, .field textarea{
+  .field input, .field textarea, .field select{
     width:100%;
     padding:10px 12px;
     border-radius:8px;
@@ -505,7 +505,7 @@
     color:var(--card-text);
     transition: background .4s ease, border-color .4s ease, color .4s ease;
   }
-  .field input:focus, .field textarea:focus{
+  .field input:focus, .field textarea:focus, .field select:focus{
     outline:2px solid var(--marigold);
     border-color:var(--marigold);
   }
@@ -675,81 +675,45 @@
       <div id="pincodeStatus" style="font-size:11.5px;margin-top:4px;"></div>
     </div>
     <div class="field">
-      <label>City</label>
-      <input type="text" id="custCity" placeholder="City">
-      <div class="error-text" id="errCity">Please enter your city</div>
+      <label>State</label>
+      <select id="custState" onchange="onStateChange()">
+        <option value="">Select State</option>
+      </select>
+      <div class="error-text" id="errState">Please select your state</div>
     </div>
     <div class="field">
-      <label>State</label>
-      <input type="text" id="custState" placeholder="State">
-      <div class="error-text" id="errState">Please enter your state</div>
+      <label>City / District</label>
+      <select id="custCity">
+        <option value="">Select State first</option>
+      </select>
+      <div class="error-text" id="errCity">Please select your city/district</div>
     </div>
-    <button class="primary-btn" onclick="goToPayment()">Continue to Payment</button>
+    <button class="primary-btn" onclick="confirmAndSendOrder()">Confirm &amp; Send Order</button>
   </div>
 </div>
 
-<!-- PAYMENT -->
-<div class="overlay" id="paymentOverlay">
-  <div class="sheet">
-    <div class="sheet-head">
-      <h3>Payment</h3>
-      <button class="close-x" onclick="closeSheet('paymentOverlay')">✕</button>
-    </div>
-    <div class="confirm-box">
-      <div id="payBreakdown" style="text-align:left;margin-bottom:10px;"></div>
-      <p style="font-size:13px;margin-bottom:4px;color:#8a7a68;">Amount to pay</p>
-      <h2 style="color:var(--maroon);font-size:30px;" id="payAmount">₹0</h2>
-
-      <div style="text-align:left;margin:16px 0 6px;">
-        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
-          <div style="flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--maroon);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">1</div>
-          <div style="font-size:13px;color:#5a4a3a;padding-top:3px;"><b>Scan the QR code below</b> with Google Pay (or any UPI app) and pay the amount shown.</div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
-          <div style="flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--maroon);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">2</div>
-          <div style="font-size:13px;color:#5a4a3a;padding-top:3px;">Tap <b>"Confirm &amp; Send Order"</b> below — this opens WhatsApp with your order details already filled in.</div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:flex-start;">
-          <div style="flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--success);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;">3</div>
-          <div style="font-size:13px;color:#5a4a3a;padding-top:3px;">On the Google Pay success screen, tap <b>Share</b> → <b>WhatsApp</b>, and send us the payment screenshot/receipt in the same chat. <b>Your order is processed only after we receive this.</b></div>
-        </div>
-      </div>
-
-      <div style="background:var(--thread);border-radius:10px;padding:14px;margin:16px 0;text-align:center;">
-        <p style="font-size:11.5px;color:#8a7a68;margin:0 0 10px;">Step 1 — Scan to pay</p>
-        <img src="qr.jpg" alt="UPI QR Code" style="width:100%;max-width:260px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.12);">
-        <p style="font-size:11px;color:#a08a70;margin:10px 0 0;">Google Pay doesn't allow screenshots on the payment screen itself — that's why Step 3 uses the Share option instead.</p>
-      </div>
-
-      <div class="field" style="text-align:left;">
-        <label>Transaction Reference Number (optional)</label>
-        <input type="text" inputmode="numeric" id="txnRef" placeholder="Only if you'd rather type it instead of sharing a screenshot">
-        <div class="error-text" id="errTxnRef">That doesn't look like a valid reference number</div>
-      </div>
-
-      <button class="primary-btn" onclick="confirmOrder()">Confirm &amp; Send Order</button>
-
-      <div class="note-box">
-        Step 2 — this button opens WhatsApp with your order pre-filled. Don't forget Step 3: share your payment screenshot/receipt in that same WhatsApp chat, or your order won't be processed.
-      </div>
-      <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
-        📦 Delivery within 4–5 business days.<br>Need it urgently? Call us immediately after placing your order — <a href="#" id="callLinkPayment" style="color:var(--success);font-weight:700;">tap here</a>.
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- CONFIRMATION -->
+<!-- CONFIRMATION (includes optional payment step) -->
 <div class="overlay" id="confirmOverlay">
   <div class="sheet">
     <div class="confirm-box">
       <div class="tick">✓</div>
-      <h3>Order Confirmed</h3>
+      <h3>Order Received!</h3>
       <p style="font-size:13px;color:#8a7a68;">Your order ID for reference:</p>
       <div class="order-id" id="orderId">RKH-0000</div>
       <div id="confirmSummary" style="text-align:left;font-size:12.5px;color:#5a4a3a;margin:12px 0;background:var(--thread);border-radius:10px;padding:12px;"></div>
-      <p style="font-size:12px;color:#8a7a68;">If WhatsApp didn't open automatically, tap below.</p>
-      <a class="secondary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Send Order to WhatsApp</a>
+
+      <div style="border-top:1.5px dashed var(--gold);margin:18px 0 14px;"></div>
+
+      <h3 style="font-size:16px;">💳 Make Payment <span style="font-size:11px;color:#8a7a68;font-weight:400;">(optional)</span></h3>
+      <p style="font-size:12px;color:#8a7a68;margin:6px 0 12px;">Pay now via UPI, or pay offline when your order is ready — totally your choice.</p>
+      <div style="background:var(--thread);border-radius:10px;padding:14px;margin-bottom:12px;">
+        <img src="qr.jpg" alt="UPI QR Code" style="width:100%;max-width:220px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.12);">
+        <p style="font-size:11px;color:#a08a70;margin:10px 0 0;">Google Pay doesn't allow screenshots on its payment screen — use Share → WhatsApp on the success screen instead, if you'd like to send us a receipt.</p>
+      </div>
+
+      <p style="font-size:12px;color:#8a7a68;">Want to let us know directly? Tap below to message us on WhatsApp (optional).</p>
+      <a class="secondary-btn" id="waFallbackBtn" href="#" target="_blank" style="display:block;text-decoration:none;box-sizing:border-box;text-align:center;">Message Us on WhatsApp</a>
+
       <div class="note-box" style="background:#EAF3EC;border-color:var(--success);color:#2d5a38;">
         📦 Delivery within 4–5 business days.<br>Need it urgently? Call us immediately after placing your order — <a href="#" id="callLinkConfirm" style="color:var(--success);font-weight:700;">tap here</a>.
       </div>
@@ -819,17 +783,19 @@ const CONFIG = {
 
 /* =========================================================
    HOW ORDER LOGGING WORKS (private — only you can see it)
-   This gives you a running record of every order — customer details,
-   payment reference, and exactly what/how much was sold — so you can
-   track sales, inventory, and revenue anytime, even if a WhatsApp
-   message is ever missed. It also powers the customer-facing
-   "Track Your Order" lookup on the site (see below).
+   This gives you a running record of every order — customer details
+   and exactly what/how much was sold — so you can track sales,
+   inventory, and revenue anytime. It also automatically pings YOUR
+   OWN WhatsApp the instant an order comes in (via CallMeBot — see
+   Part B below), and powers the customer-facing "Track Your Order"
+   lookup on the site.
 
+   ───────────────────────────────────────────────────────────
+   PART A — The Sheet + Apps Script (order logging & tracking)
+   ───────────────────────────────────────────────────────────
    1. Make one new Google Sheet with TWO tabs (rename Sheet1, add a second):
       Tab "Orders" — headers in row 1:
-        Timestamp | Order ID | Txn Ref | Subtotal | Delivery Charge | Total | Name | Phone | Address | City | State | Pincode | Note | Status
-      (Note: the "Note" field was removed from checkout, so this column will
-      just stay blank going forward — no need to change the script or headers.)
+        Timestamp | Order ID | Subtotal | Delivery Charge | Total | Name | Phone | Address | City | State | Pincode | Status
       Tab "OrderItems" — headers in row 1:
         Timestamp | Order ID | Product | Category | Qty | Price | Line Total
 
@@ -840,6 +806,10 @@ const CONFIG = {
    2. In that spreadsheet: Extensions → Apps Script
    3. Delete any starter code and paste:
 
+      // ── Fill these in after completing Part B below ──
+      var CALLMEBOT_PHONE  = "91XXXXXXXXXX";   // your WhatsApp number, country code, no + or spaces
+      var CALLMEBOT_APIKEY = "your_apikey_here"; // from the CallMeBot setup step
+
       function doPost(e) {
         var ss = SpreadsheetApp.getActiveSpreadsheet();
         var orders = ss.getSheetByName("Orders");
@@ -848,16 +818,36 @@ const CONFIG = {
         var now = new Date();
 
         orders.appendRow([
-          now, data.orderId, data.txnRef, data.subtotal, data.deliveryCharge,
+          now, data.orderId, data.subtotal, data.deliveryCharge,
           data.total, data.name, data.phone, data.address, data.city,
-          data.state, data.pincode, data.note, "Processing"
+          data.state, data.pincode, "Processing"
         ]);
 
         (data.lineItems || []).forEach(function(li){
           items.appendRow([now, data.orderId, li.name, li.cat, li.qty, li.price, li.lineTotal]);
         });
 
+        notifyWhatsApp(data);
+
         return ContentService.createTextOutput("OK");
+      }
+
+      function notifyWhatsApp(data) {
+        try {
+          var lines = (data.lineItems || []).map(function(li){
+            return "• " + li.name + " x" + li.qty;
+          }).join("\\n");
+          var msg = "🪢 New Order " + data.orderId + "\\n\\n" + lines +
+                     "\\n\\nTotal: ₹" + data.total +
+                     "\\nName: " + data.name +
+                     "\\nPhone: " + data.phone +
+                     "\\nAddress: " + data.address + ", " + data.city + ", " + data.state + " - " + data.pincode;
+          var url = "https://api.callmebot.com/whatsapp.php?phone=" + CALLMEBOT_PHONE +
+                     "&text=" + encodeURIComponent(msg) + "&apikey=" + CALLMEBOT_APIKEY;
+          UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+        } catch (err) {
+          // Never let a notification failure block order logging
+        }
       }
 
       function doGet(e) {
@@ -897,8 +887,31 @@ const CONFIG = {
    lookup only ever reveals one order's status to someone who already
    knows that order's exact ID.
 
+   ───────────────────────────────────────────────────────────
+   PART B — CallMeBot setup (free automatic WhatsApp ping to you)
+   ───────────────────────────────────────────────────────────
+   This is a free, well-established service that lets a script message
+   YOUR OWN WhatsApp automatically — exactly what we need here, since
+   it's for personal notifications (not sending to customers).
+
+   1. Save this number in your phone contacts: +34 611 021 695
+   2. From your phone, send this exact WhatsApp message to that number:
+        I allow callmebot to send me messages
+   3. Within a minute or two, the bot replies with your personal API key
+   4. Go back into the Apps Script code above and fill in:
+        CALLMEBOT_PHONE  = your own WhatsApp number (e.g. "919043048318")
+        CALLMEBOT_APIKEY = the key the bot sent you
+   5. Save the script, then Deploy → Manage deployments → pencil icon →
+      Version: "New version" → Deploy (so the updated code takes effect)
+
+   That's it — from then on, every order placed on the site will land
+   directly in your WhatsApp automatically, no customer action needed.
+   Honest note: this is a free third-party service (not the official
+   WhatsApp Business API), so treat it as your primary alert with the
+   Google Sheet as backup, in the rare case a message doesn't arrive.
+
    IMPORTANT: if you already deployed this Apps Script before adding
-   doGet, you must redeploy for the tracking feature to work: Deploy →
+   doGet/notifyWhatsApp, you must redeploy for these to work: Deploy →
    Manage deployments → pencil icon → Version: "New version" → Deploy.
    The URL stays the same, so no code change needed here.
 
@@ -1283,10 +1296,19 @@ function renderModalQty(){
 }
 
 /* ================= CART FAB ================= */
-function cartCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
+function isSoldOut(p){
+  return p.stock !== null && p.stock !== undefined && p.stock <= 0;
+}
+function cartCount(){
+  return Object.entries(cart).reduce((a,[id,qty])=>{
+    const p = PRODUCTS.find(x=>x.id==id);
+    return a + (p && !isSoldOut(p) ? qty : 0);
+  },0);
+}
 function cartTotal(){
   return Object.entries(cart).reduce((sum,[id,qty])=>{
     const p = PRODUCTS.find(x=>x.id==id);
+    if(!p || isSoldOut(p)) return sum; // sold-out items never count toward the order
     return sum + p.price*qty;
   },0);
 }
@@ -1296,6 +1318,11 @@ function updateFab(){
   fab.classList.toggle('hidden', count===0);
   document.getElementById('fabCount').textContent = count + (count===1?' item':' items');
   document.getElementById('fabTotal').textContent = '₹'+cartTotal();
+}
+function removeCartItem(id){
+  delete cart[id];
+  saveCart();
+  renderGrid(); updateFab(); renderCartSheet(); renderModalQty();
 }
 
 /* ================= CART SHEET ================= */
@@ -1311,12 +1338,24 @@ function renderCartSheet(){
     checkoutBtn.style.display='none';
     return;
   }
-  checkoutBtn.style.display='block';
   listEl.innerHTML = entries.map(([id,qty])=>{
     const p = PRODUCTS.find(x=>x.id==id);
-    const thumbHtml = p.img ? `<img src="${p.img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : p.icon;
+    if(!p) return '';
+    const thumbHtml = p.img ? `<img src="${p.img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;${isSoldOut(p)?'filter:grayscale(1);opacity:.6;':''}">` : p.icon;
+    if(isSoldOut(p)){
+      return `<div class="cart-item" style="opacity:.75;">
+        <div class="thumb" style="background:${p.img ? '#eee' : p.color}">${thumbHtml}</div>
+        <div class="info">
+          <b style="text-decoration:line-through;">${p.name}</b>
+          <span style="text-decoration:line-through;">₹${p.price} × ${qty}</span><br>
+          <span style="color:#b23a3a;font-weight:700;font-size:11px;">Sold Out — won't be included in your order</span>
+        </div>
+        <button class="remove-link" onclick="removeCartItem(${p.id})">Remove</button>
+      </div>`;
+    }
+    const thumbHtmlOk = p.img ? `<img src="${p.img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : p.icon;
     return `<div class="cart-item">
-      <div class="thumb" style="background:${p.img ? '#eee' : p.color}">${thumbHtml}</div>
+      <div class="thumb" style="background:${p.img ? '#eee' : p.color}">${thumbHtmlOk}</div>
       <div class="info">
         <b>${p.name}</b>
         <span>₹${p.price} × ${qty} = ₹${p.price*qty}</span>
@@ -1330,11 +1369,19 @@ function renderCartSheet(){
       </div>
     </div>`;
   }).join('');
+
+  const validCount = cartCount();
   totalsEl.innerHTML = `
-    <div class="totals-row"><span>Items</span><span>${cartCount()}</span></div>
+    <div class="totals-row"><span>Items</span><span>${validCount}</span></div>
     <div class="totals-row grand"><span>Total</span><span>₹${cartTotal()}</span></div>
     <p style="font-size:11px;color:#a08a70;margin-top:6px;">Delivery charge is added at checkout: ₹${SETTINGS.withinCityFee} within ${SETTINGS.localCity}, ₹${SETTINGS.outsideCityFee} outside.</p>
   `;
+  if(validCount === 0){
+    checkoutBtn.style.display='none';
+    totalsEl.innerHTML += `<p style="font-size:12px;color:#b23a3a;font-weight:600;margin-top:8px;">Please remove the sold-out item(s) above — there's nothing left to order.</p>`;
+  } else {
+    checkoutBtn.style.display='block';
+  }
 }
 
 /* ================= SHEET HELPERS ================= */
@@ -1343,6 +1390,10 @@ function closeSheet(id){ document.getElementById(id).classList.remove('show'); }
 
 /* ================= CHECKOUT: DETAILS ================= */
 function openDetails(){
+  if(cartCount() === 0){
+    alert("Please remove any sold-out items from your cart before checking out.");
+    return;
+  }
   closeSheet('cartOverlay');
   showSheet('detailsOverlay');
 }
@@ -1360,18 +1411,55 @@ function validateDetails(){
   document.getElementById('errPhone').style.display = /^[6-9]\d{9}$/.test(phone) ? 'none':'block';
   document.getElementById('errAddress').style.display = address ? 'none':'block';
   document.getElementById('errPincode').style.display = /^[1-9]\d{5}$/.test(pincode) ? 'none':'block';
-  document.getElementById('errCity').style.display = city ? 'none':'block';
   document.getElementById('errState').style.display = state ? 'none':'block';
+  document.getElementById('errCity').style.display = city ? 'none':'block';
 
-  if(!name || !/^[6-9]\d{9}$/.test(phone) || !address || !/^[1-9]\d{5}$/.test(pincode) || !city || !state) ok = false;
+  if(!name || !/^[6-9]\d{9}$/.test(phone) || !address || !/^[1-9]\d{5}$/.test(pincode) || !state || !city) ok = false;
   return ok;
 }
 
+/* ================= STATE / DISTRICT DROPDOWNS =================
+   Locked selection instead of free text — a customer can never type
+   something that doesn't match a real Indian state/district. Pincode
+   lookup below auto-selects both when it can find a match; when it
+   can't, the customer just picks from the dropdown themselves. */
+const INDIA_STATES_DISTRICTS = {"states":[{"state":"Andhra Pradesh","districts":["Anantapur","Chittoor","East Godavari","Guntur","Krishna","Kurnool","Nellore","Prakasam","Srikakulam","Visakhapatnam","Vizianagaram","West Godavari","YSR Kadapa"]},{"state":"Arunachal Pradesh","districts":["Tawang","West Kameng","East Kameng","Papum Pare","Kurung Kumey","Kra Daadi","Lower Subansiri","Upper Subansiri","West Siang","East Siang","Siang","Upper Siang","Lower Siang","Lower Dibang Valley","Dibang Valley","Anjaw","Lohit","Namsai","Changlang","Tirap","Longding"]},{"state":"Assam","districts":["Baksa","Barpeta","Biswanath","Bongaigaon","Cachar","Charaideo","Chirang","Darrang","Dhemaji","Dhubri","Dibrugarh","Goalpara","Golaghat","Hailakandi","Hojai","Jorhat","Kamrup Metropolitan","Kamrup","Karbi Anglong","Karimganj","Kokrajhar","Lakhimpur","Majuli","Morigaon","Nagaon","Nalbari","Dima Hasao","Sivasagar","Sonitpur","South Salmara-Mankachar","Tinsukia","Udalguri","West Karbi Anglong"]},{"state":"Bihar","districts":["Araria","Arwal","Aurangabad","Banka","Begusarai","Bhagalpur","Bhojpur","Buxar","Darbhanga","East Champaran (Motihari)","Gaya","Gopalganj","Jamui","Jehanabad","Kaimur (Bhabua)","Katihar","Khagaria","Kishanganj","Lakhisarai","Madhepura","Madhubani","Munger (Monghyr)","Muzaffarpur","Nalanda","Nawada","Patna","Purnia (Purnea)","Rohtas","Saharsa","Samastipur","Saran","Sheikhpura","Sheohar","Sitamarhi","Siwan","Supaul","Vaishali","West Champaran"]},{"state":"Chandigarh (UT)","districts":["Chandigarh"]},{"state":"Chhattisgarh","districts":["Balod","Baloda Bazar","Balrampur","Bastar","Bemetara","Bijapur","Bilaspur","Dantewada (South Bastar)","Dhamtari","Durg","Gariyaband","Janjgir-Champa","Jashpur","Kabirdham (Kawardha)","Kanker (North Bastar)","Kondagaon","Korba","Korea (Koriya)","Mahasamund","Mungeli","Narayanpur","Raigarh","Raipur","Rajnandgaon","Sukma","Surajpur","Surguja"]},{"state":"Dadra and Nagar Haveli (UT)","districts":["Dadra & Nagar Haveli"]},{"state":"Daman and Diu (UT)","districts":["Daman","Diu"]},{"state":"Delhi (NCT)","districts":["Central Delhi","East Delhi","New Delhi","North Delhi","North East Delhi","North West Delhi","Shahdara","South Delhi","South East Delhi","South West Delhi","West Delhi"]},{"state":"Goa","districts":["North Goa","South Goa"]},{"state":"Gujarat","districts":["Ahmedabad","Amreli","Anand","Aravalli","Banaskantha (Palanpur)","Bharuch","Bhavnagar","Botad","Chhota Udepur","Dahod","Dangs (Ahwa)","Devbhoomi Dwarka","Gandhinagar","Gir Somnath","Jamnagar","Junagadh","Kachchh","Kheda (Nadiad)","Mahisagar","Mehsana","Morbi","Narmada (Rajpipla)","Navsari","Panchmahal (Godhra)","Patan","Porbandar","Rajkot","Sabarkantha (Himmatnagar)","Surat","Surendranagar","Tapi (Vyara)","Vadodara","Valsad"]},{"state":"Haryana","districts":["Ambala","Bhiwani","Charkhi Dadri","Faridabad","Fatehabad","Gurgaon","Hisar","Jhajjar","Jind","Kaithal","Karnal","Kurukshetra","Mahendragarh","Mewat","Palwal","Panchkula","Panipat","Rewari","Rohtak","Sirsa","Sonipat","Yamunanagar"]},{"state":"Himachal Pradesh","districts":["Bilaspur","Chamba","Hamirpur","Kangra","Kinnaur","Kullu","Lahaul & Spiti","Mandi","Shimla","Sirmaur (Sirmour)","Solan","Una"]},{"state":"Jammu and Kashmir","districts":["Anantnag","Bandipore","Baramulla","Budgam","Doda","Ganderbal","Jammu","Kargil","Kathua","Kishtwar","Kulgam","Kupwara","Leh","Poonch","Pulwama","Rajouri","Ramban","Reasi","Samba","Shopian","Srinagar","Udhampur"]},{"state":"Jharkhand","districts":["Bokaro","Chatra","Deoghar","Dhanbad","Dumka","East Singhbhum","Garhwa","Giridih","Godda","Gumla","Hazaribag","Jamtara","Khunti","Koderma","Latehar","Lohardaga","Pakur","Palamu","Ramgarh","Ranchi","Sahibganj","Seraikela-Kharsawan","Simdega","West Singhbhum"]},{"state":"Karnataka","districts":["Bagalkot","Ballari (Bellary)","Belagavi (Belgaum)","Bengaluru (Bangalore) Rural","Bengaluru (Bangalore) Urban","Bidar","Chamarajanagar","Chikballapur","Chikkamagaluru (Chikmagalur)","Chitradurga","Dakshina Kannada","Davangere","Dharwad","Gadag","Hassan","Haveri","Kalaburagi (Gulbarga)","Kodagu","Kolar","Koppal","Mandya","Mysuru (Mysore)","Raichur","Ramanagara","Shivamogga (Shimoga)","Tumakuru (Tumkur)","Udupi","Uttara Kannada (Karwar)","Vijayapura (Bijapur)","Yadgir"]},{"state":"Kerala","districts":["Alappuzha","Ernakulam","Idukki","Kannur","Kasaragod","Kollam","Kottayam","Kozhikode","Malappuram","Palakkad","Pathanamthitta","Thiruvananthapuram","Thrissur","Wayanad"]},{"state":"Lakshadweep (UT)","districts":["Agatti","Amini","Androth","Bithra","Chethlath","Kavaratti","Kadmath","Kalpeni","Kilthan","Minicoy"]},{"state":"Madhya Pradesh","districts":["Agar Malwa","Alirajpur","Anuppur","Ashoknagar","Balaghat","Barwani","Betul","Bhind","Bhopal","Burhanpur","Chhatarpur","Chhindwara","Damoh","Datia","Dewas","Dhar","Dindori","Guna","Gwalior","Harda","Hoshangabad","Indore","Jabalpur","Jhabua","Katni","Khandwa","Khargone","Mandla","Mandsaur","Morena","Narsinghpur","Neemuch","Panna","Raisen","Rajgarh","Ratlam","Rewa","Sagar","Satna","Sehore","Seoni","Shahdol","Shajapur","Sheopur","Shivpuri","Sidhi","Singrauli","Tikamgarh","Ujjain","Umaria","Vidisha"]},{"state":"Maharashtra","districts":["Ahmednagar","Akola","Amravati","Aurangabad","Beed","Bhandara","Buldhana","Chandrapur","Dhule","Gadchiroli","Gondia","Hingoli","Jalgaon","Jalna","Kolhapur","Latur","Mumbai City","Mumbai Suburban","Nagpur","Nanded","Nandurbar","Nashik","Osmanabad","Palghar","Parbhani","Pune","Raigad","Ratnagiri","Sangli","Satara","Sindhudurg","Solapur","Thane","Wardha","Washim","Yavatmal"]},{"state":"Manipur","districts":["Bishnupur","Chandel","Churachandpur","Imphal East","Imphal West","Jiribam","Kakching","Kamjong","Kangpokpi","Noney","Pherzawl","Senapati","Tamenglong","Tengnoupal","Thoubal","Ukhrul"]},{"state":"Meghalaya","districts":["East Garo Hills","East Jaintia Hills","East Khasi Hills","North Garo Hills","Ri Bhoi","South Garo Hills","South West Garo Hills","South West Khasi Hills","West Garo Hills","West Jaintia Hills","West Khasi Hills"]},{"state":"Mizoram","districts":["Aizawl","Champhai","Kolasib","Lawngtlai","Lunglei","Mamit","Saiha","Serchhip"]},{"state":"Nagaland","districts":["Dimapur","Kiphire","Kohima","Longleng","Mokokchung","Mon","Peren","Phek","Tuensang","Wokha","Zunheboto"]},{"state":"Odisha","districts":["Angul","Balangir","Balasore","Bargarh","Bhadrak","Boudh","Cuttack","Deogarh","Dhenkanal","Gajapati","Ganjam","Jagatsinghapur","Jajpur","Jharsuguda","Kalahandi","Kandhamal","Kendrapara","Kendujhar (Keonjhar)","Khordha","Koraput","Malkangiri","Mayurbhanj","Nabarangpur","Nayagarh","Nuapada","Puri","Rayagada","Sambalpur","Sonepur","Sundargarh"]},{"state":"Puducherry (UT)","districts":["Karaikal","Mahe","Pondicherry","Yanam"]},{"state":"Punjab","districts":["Amritsar","Barnala","Bathinda","Faridkot","Fatehgarh Sahib","Fazilka","Ferozepur","Gurdaspur","Hoshiarpur","Jalandhar","Kapurthala","Ludhiana","Mansa","Moga","Muktsar","Nawanshahr (Shahid Bhagat Singh Nagar)","Pathankot","Patiala","Rupnagar","Sahibzada Ajit Singh Nagar (Mohali)","Sangrur","Tarn Taran"]},{"state":"Rajasthan","districts":["Ajmer","Alwar","Banswara","Baran","Barmer","Bharatpur","Bhilwara","Bikaner","Bundi","Chittorgarh","Churu","Dausa","Dholpur","Dungarpur","Hanumangarh","Jaipur","Jaisalmer","Jalore","Jhalawar","Jhunjhunu","Jodhpur","Karauli","Kota","Nagaur","Pali","Pratapgarh","Rajsamand","Sawai Madhopur","Sikar","Sirohi","Sri Ganganagar","Tonk","Udaipur"]},{"state":"Sikkim","districts":["East Sikkim","North Sikkim","South Sikkim","West Sikkim"]},{"state":"Tamil Nadu","districts":["Ariyalur","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kanchipuram","Kanyakumari","Karur","Krishnagiri","Madurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram","Salem","Sivaganga","Thanjavur","Theni","Thoothukudi (Tuticorin)","Tiruchirappalli","Tirunelveli","Tiruppur","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore","Viluppuram","Virudhunagar"]},{"state":"Telangana","districts":["Adilabad","Bhadradri Kothagudem","Hyderabad","Jagtial","Jangaon","Jayashankar Bhoopalpally","Jogulamba Gadwal","Kamareddy","Karimnagar","Khammam","Komaram Bheem Asifabad","Mahabubabad","Mahabubnagar","Mancherial","Medak","Medchal","Nagarkurnool","Nalgonda","Nirmal","Nizamabad","Peddapalli","Rajanna Sircilla","Rangareddy","Sangareddy","Siddipet","Suryapet","Vikarabad","Wanaparthy","Warangal (Rural)","Warangal (Urban)","Yadadri Bhuvanagiri"]},{"state":"Tripura","districts":["Dhalai","Gomati","Khowai","North Tripura","Sepahijala","South Tripura","Unakoti","West Tripura"]},{"state":"Uttarakhand","districts":["Almora","Bageshwar","Chamoli","Champawat","Dehradun","Haridwar","Nainital","Pauri Garhwal","Pithoragarh","Rudraprayag","Tehri Garhwal","Udham Singh Nagar","Uttarkashi"]},{"state":"Uttar Pradesh","districts":["Agra","Aligarh","Allahabad","Ambedkar Nagar","Amethi (Chatrapati Sahuji Mahraj Nagar)","Amroha (J.P. Nagar)","Auraiya","Azamgarh","Baghpat","Bahraich","Ballia","Balrampur","Banda","Barabanki","Bareilly","Basti","Bhadohi","Bijnor","Budaun","Bulandshahr","Chandauli","Chitrakoot","Deoria","Etah","Etawah","Faizabad","Farrukhabad","Fatehpur","Firozabad","Gautam Buddha Nagar","Ghaziabad","Ghazipur","Gonda","Gorakhpur","Hamirpur","Hapur (Panchsheel Nagar)","Hardoi","Hathras","Jalaun","Jaunpur","Jhansi","Kannauj","Kanpur Dehat","Kanpur Nagar","Kanshiram Nagar (Kasganj)","Kaushambi","Kushinagar (Padrauna)","Lakhimpur - Kheri","Lalitpur","Lucknow","Maharajganj","Mahoba","Mainpuri","Mathura","Mau","Meerut","Mirzapur","Moradabad","Muzaffarnagar","Pilibhit","Pratapgarh","RaeBareli","Rampur","Saharanpur","Sambhal (Bhim Nagar)","Sant Kabir Nagar","Shahjahanpur","Shamali (Prabuddh Nagar)","Shravasti","Siddharth Nagar","Sitapur","Sonbhadra","Sultanpur","Unnao","Varanasi"]},{"state":"West Bengal","districts":["Alipurduar","Bankura","Birbhum","Burdwan (Bardhaman)","Cooch Behar","Dakshin Dinajpur (South Dinajpur)","Darjeeling","Hooghly","Howrah","Jalpaiguri","Kalimpong","Kolkata","Malda","Murshidabad","Nadia","North 24 Parganas","Paschim Medinipur (West Medinipur)","Purba Medinipur (East Medinipur)","Purulia","South 24 Parganas","Uttar Dinajpur (North Dinajpur)"]}]};
+
+function populateStateDropdown(){
+  const stateSel = document.getElementById('custState');
+  INDIA_STATES_DISTRICTS.states.forEach(s=>{
+    const opt = document.createElement('option');
+    opt.value = s.state;
+    opt.textContent = s.state;
+    stateSel.appendChild(opt);
+  });
+}
+function onStateChange(){
+  const stateName = document.getElementById('custState').value;
+  const citySel = document.getElementById('custCity');
+  citySel.innerHTML = '';
+  const stateObj = INDIA_STATES_DISTRICTS.states.find(s=>s.state === stateName);
+  if(!stateObj){
+    citySel.innerHTML = '<option value="">Select State first</option>';
+    return;
+  }
+  citySel.innerHTML = '<option value="">Select City/District</option>';
+  stateObj.districts.forEach(d=>{
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d;
+    citySel.appendChild(opt);
+  });
+}
+populateStateDropdown();
+
 /* ================= PINCODE VERIFICATION =================
    Checks the entered pincode against India's official Postal
-   Pincode API and auto-fills City/State so they can't mismatch
-   the pincode. If the lookup service is unreachable, it doesn't
-   block checkout — the person can still enter city/state manually. */
+   Pincode API and auto-SELECTS the matching State/District dropdown
+   options — never free text, so nothing invalid can be entered even
+   automatically. If no exact match is found in our dropdown list, the
+   State still gets selected when possible, and the customer just picks
+   their District manually from the (now-populated) dropdown. */
 let pincodeVerified = false;
 const pincodeInput = document.getElementById('custPincode');
 const statusEl = document.getElementById('pincodeStatus');
@@ -1390,55 +1478,49 @@ async function lookupPincode(code){
     const info = data && data[0];
     if(info && info.Status === 'Success' && info.PostOffice && info.PostOffice.length){
       const po = info.PostOffice[0];
-      document.getElementById('custCity').value = po.District || po.Name || '';
-      document.getElementById('custState').value = po.State || '';
-      statusEl.style.color = 'var(--success)';
-      statusEl.textContent = '✓ Pincode verified — city/state auto-filled';
-      pincodeVerified = true;
+      const stateSel = document.getElementById('custState');
+      const citySel = document.getElementById('custCity');
+      const matchedState = INDIA_STATES_DISTRICTS.states.find(s=>
+        s.state.toLowerCase().includes((po.State||'').toLowerCase()) ||
+        (po.State||'').toLowerCase().includes(s.state.toLowerCase())
+      );
+      if(matchedState){
+        stateSel.value = matchedState.state;
+        onStateChange();
+        const districtGuess = po.District || '';
+        const matchedDistrict = matchedState.districts.find(d=>
+          d.toLowerCase().includes(districtGuess.toLowerCase()) ||
+          districtGuess.toLowerCase().includes(d.toLowerCase().split(' (')[0])
+        );
+        if(matchedDistrict){
+          citySel.value = matchedDistrict;
+          statusEl.style.color = 'var(--success)';
+          statusEl.textContent = '✓ Pincode verified — state/city auto-selected';
+          pincodeVerified = true;
+        } else {
+          statusEl.style.color = 'var(--success)';
+          statusEl.textContent = '✓ Pincode verified — please pick your exact city/district below';
+          pincodeVerified = true;
+        }
+      } else {
+        statusEl.style.color = '#a08a70';
+        statusEl.textContent = 'Pincode found, but please select your State/City below';
+      }
     } else {
       statusEl.style.color = '#b23a3a';
-      statusEl.textContent = 'Pincode not found — please double-check it';
+      statusEl.textContent = 'Pincode not found — please select your State/City below';
     }
   } catch(e){
     statusEl.style.color = '#a08a70';
-    statusEl.textContent = "Couldn't verify automatically — please confirm city/state match";
+    statusEl.textContent = "Couldn't verify automatically — please select your State/City below";
   }
 }
 
-function goToPayment(){
+function confirmAndSendOrder(){
   if(document.activeElement) document.activeElement.blur();
   if(!validateDetails()) return;
   closeSheet('detailsOverlay');
-  const city = document.getElementById('custCity').value.trim();
-  const subtotal = cartTotal();
-  const deliveryCharge = computeDeliveryCharge(city);
-  const isLocal = city.trim().toLowerCase() === SETTINGS.localCity.trim().toLowerCase();
-  const grandTotal = subtotal + deliveryCharge;
-
-  const breakdownEl = document.getElementById('payBreakdown');
-  breakdownEl.innerHTML = `
-    <div class="totals-row"><span>Subtotal</span><span>₹${subtotal}</span></div>
-    <div class="totals-row"><span>Delivery Charges (${isLocal ? 'within' : 'outside'} ${SETTINGS.localCity})</span><span>₹${deliveryCharge}</span></div>
-  `;
-  document.getElementById('payAmount').textContent = '₹'+grandTotal;
-  document.getElementById('txnRef').value = '';
-  document.getElementById('errTxnRef').style.display = 'none';
   currentOrder = null; // fresh order context for this checkout
-  showSheet('paymentOverlay');
-}
-
-function confirmOrder(){
-  if(document.activeElement) document.activeElement.blur();
-  const txnRef = document.getElementById('txnRef').value.trim();
-  const errEl = document.getElementById('errTxnRef');
-  // Optional field — only flag it if something was typed but looks too short to be real
-  if(txnRef && txnRef.length < 4){
-    errEl.style.display = 'block';
-    return;
-  }
-  errEl.style.display = 'none';
-  currentOrder = null; // force fresh prepare including this txnRef
-  window.pendingTxnRef = txnRef || '(shared via WhatsApp / not provided)';
   showConfirmation();
 }
 
@@ -1455,13 +1537,15 @@ function prepareOrder(){
   const pincode = document.getElementById('custPincode').value.trim();
   const city = document.getElementById('custCity').value.trim();
   const state = document.getElementById('custState').value.trim();
-  const txnRef = window.pendingTxnRef || '';
   const orderId = generateOrderId();
 
-  const lineItems = Object.entries(cart).map(([id,qty])=>{
-    const p = PRODUCTS.find(x=>x.id==id);
-    return { name:p.name, cat:p.cat, qty, price:p.price, lineTotal:p.price*qty };
-  });
+  const lineItems = Object.entries(cart)
+    .map(([id,qty])=>{
+      const p = PRODUCTS.find(x=>x.id==id);
+      return p ? { p, qty } : null;
+    })
+    .filter(entry => entry && !isSoldOut(entry.p)) // sold-out items never make it into the order
+    .map(({p,qty})=> ({ name:p.name, cat:p.cat, qty, price:p.price, lineTotal:p.price*qty }));
   const itemLines = lineItems.map(li=> `• ${li.name} × ${li.qty} = ₹${li.lineTotal}`).join('\n');
   const itemsPlain = lineItems.map(li=> `${li.name} x${li.qty}`).join(', ');
 
@@ -1483,16 +1567,16 @@ Customer Details:
 Name: ${name}
 Phone: ${phone}
 Address: ${address}
-City: ${city}
+City/District: ${city}
 State: ${state}
 Pincode: ${pincode}${pincodeVerified ? ' (verified)' : ''}
 
-Payment: UPI — Transaction Ref: ${txnRef} (please verify before shipping)
+Payment: Not yet confirmed — customer may pay via UPI or offline.
 Delivery: 4–5 business days. For urgent delivery, please call us immediately after placing your order.`;
 
   const waLink = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
 
-  currentOrder = { orderId, name, phone, address, city, state, pincode, txnRef, subtotal, deliveryCharge, total, itemsPlain, lineItems, waLink };
+  currentOrder = { orderId, name, phone, address, city, state, pincode, subtotal, deliveryCharge, total, itemsPlain, lineItems, waLink };
   logOrderToSheet(currentOrder);
   return currentOrder;
 }
@@ -1553,14 +1637,14 @@ function showConfirmation(){
   document.getElementById('confirmSummary').innerHTML = `
     <b>${order.itemsPlain}</b><br>
     Subtotal: ₹${order.subtotal}<br>Delivery Charges: ₹${order.deliveryCharge}<br>
-    <b>Total: ₹${order.total}</b><br>
-    Transaction Ref: ${order.txnRef}<br><br>
+    <b>Total: ₹${order.total}</b><br><br>
     Delivering to: ${order.address}, ${order.city}, ${order.state} - ${order.pincode}
   `;
   document.getElementById('waFallbackBtn').href = order.waLink;
-  closeSheet('paymentOverlay');
   showSheet('confirmOverlay');
-  window.open(order.waLink, '_blank');
+  // No automatic WhatsApp/app-switch here — the order is already logged
+  // silently (and pings you via WhatsApp/CallMeBot from Apps Script).
+  // The customer can optionally message you too, via the button above.
 
   if(typeof gtag === 'function'){
     gtag('event', 'purchase', {
@@ -1579,20 +1663,19 @@ function resetCart(){
   cart = {};
   saveCart();
   currentOrder = null;
-  window.pendingTxnRef = '';
   document.getElementById('custName').value='';
   document.getElementById('custPhone').value='';
   document.getElementById('custAddress').value='';
   document.getElementById('custPincode').value='';
-  document.getElementById('custCity').value='';
   document.getElementById('custState').value='';
+  document.getElementById('custCity').innerHTML = '<option value="">Select State first</option>';
   statusEl.textContent = '';
   pincodeVerified = false;
   renderGrid(); updateFab();
 }
 
 /* ================= SET CALL LINKS FROM CONFIG ================= */
-['callLinkPayment','callLinkConfirm'].forEach(id=>{
+['callLinkConfirm'].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.href = `tel:+${CONFIG.whatsappNumber}`;
 });
