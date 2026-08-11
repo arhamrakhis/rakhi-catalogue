@@ -1030,36 +1030,62 @@ function parseCSV(text){
 }
 
 /* ================= LOAD PRODUCTS (from sheet, or sample fallback) ================= */
-async function loadProducts(){
-  gridEl.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#8a7a68;padding:30px 0;">Loading rakhis… 🪢</p>`;
+async function fetchLatestProducts(){
   if(CONFIG.sheetCsvUrl && CONFIG.sheetCsvUrl.trim()!==''){
     try{
       const res = await fetch(CONFIG.sheetCsvUrl);
       if(!res.ok) throw new Error('Sheet fetch failed');
       const text = await res.text();
       const parsed = parseCSV(text);
-      PRODUCTS = parsed.length ? parsed : SAMPLE_PRODUCTS;
+      return parsed.length ? parsed : SAMPLE_PRODUCTS;
     } catch(e){
       console.error('Could not load product sheet, showing sample items instead:', e);
-      PRODUCTS = SAMPLE_PRODUCTS;
+      return SAMPLE_PRODUCTS;
     }
-  } else {
-    PRODUCTS = SAMPLE_PRODUCTS;
   }
+  return SAMPLE_PRODUCTS;
+}
+function rebuildCategoriesFrom(products){
   const PREFERRED_ORDER = ["Money Envelopes","Singles","Jodis","Premium","Kids","Ladies","Maulis"];
-  const foundCats = [...new Set(PRODUCTS.map(p=>p.cat))];
-  // Fuzzy match: strips a trailing "s" from the preferred word (e.g. "Singles" -> "single")
-  // so it matches variations like "Single Rakhis", "Singles", "Single", etc.
+  const foundCats = [...new Set(products.map(p=>p.cat))];
   const matchCat = (order) => {
     const stripped = order.toLowerCase().replace(/s$/,'');
     return foundCats.find(c => c.toLowerCase().includes(stripped));
   };
   const known = PREFERRED_ORDER.map(matchCat).filter(Boolean);
   const unknown = foundCats.filter(c => !known.includes(c));
-  CATS = ["All", ...known, ...unknown];
+  return ["All", ...known, ...unknown];
+}
+
+async function loadProducts(){
+  gridEl.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#8a7a68;padding:30px 0;">Loading rakhis… 🪢</p>`;
+  PRODUCTS = await fetchLatestProducts();
+  CATS = rebuildCategoriesFrom(PRODUCTS);
   renderCatChips();
   renderGrid();
 }
+
+/* ================= SILENT STOCK REFRESH =================
+   Re-fetches the product sheet WITHOUT clearing the grid first (no
+   "Loading..." flash), so stock/sold-out status stays fresh even for
+   someone who's had the page open a while without reloading. Called:
+   1) automatically every 60 seconds in the background,
+   2) right when the cart is opened,
+   3) right before an order is actually sent — the last checkpoint. */
+let refreshInFlight = false;
+async function refreshProductsSilently(){
+  if(refreshInFlight) return;
+  refreshInFlight = true;
+  try{
+    const fresh = await fetchLatestProducts();
+    PRODUCTS = fresh;
+    CATS = rebuildCategoriesFrom(PRODUCTS);
+    renderGrid();
+  } finally {
+    refreshInFlight = false;
+  }
+}
+setInterval(refreshProductsSilently, 60000);
 
 /* =========================================================
    CATEGORY THEMES — each category gets its own mood.
@@ -1326,7 +1352,11 @@ function removeCartItem(id){
 }
 
 /* ================= CART SHEET ================= */
-function openCart(){ renderCartSheet(); showSheet('cartOverlay'); }
+function openCart(){
+  renderCartSheet();
+  showSheet('cartOverlay');
+  refreshProductsSilently().then(renderCartSheet); // catch anything that just went sold out
+}
 function renderCartSheet(){
   const listEl = document.getElementById('cartList');
   const totalsEl = document.getElementById('cartTotals');
@@ -1516,9 +1546,28 @@ async function lookupPincode(code){
   }
 }
 
-function confirmAndSendOrder(){
+async function confirmAndSendOrder(){
   if(document.activeElement) document.activeElement.blur();
   if(!validateDetails()) return;
+
+  // Final checkpoint: re-check stock right now, in case something sold
+  // out in the time between opening the cart and reaching this button.
+  await refreshProductsSilently();
+  const nowSoldOut = Object.keys(cart)
+    .map(id => PRODUCTS.find(x=>x.id==id))
+    .filter(p => p && isSoldOut(p));
+  if(nowSoldOut.length > 0){
+    alert(`Sorry — "${nowSoldOut[0].name}" just went out of stock. Please remove it from your cart to continue.`);
+    closeSheet('detailsOverlay');
+    openCart();
+    return;
+  }
+  if(cartCount() === 0){
+    alert("Your cart has no available items left. Please add something to order.");
+    closeSheet('detailsOverlay');
+    return;
+  }
+
   closeSheet('detailsOverlay');
   currentOrder = null; // fresh order context for this checkout
   showConfirmation();
